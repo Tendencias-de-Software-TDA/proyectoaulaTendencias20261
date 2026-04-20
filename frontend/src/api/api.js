@@ -1,0 +1,38 @@
+import axios from "axios";
+
+const api = axios.create({
+  baseURL: "http://127.0.0.1:8000/api",
+  headers: { "Content-Type": "application/json" },
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("access_token");
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response.data,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      window.location.reload();
+    }
+    return Promise.reject(error.response || error);
+  }
+);
+
+export const getComments = (taskId) =>
+  api.get(`/comments/?task=${taskId}`);
+
+export const createComment = (taskId, content) =>
+  api.post("/comments/", { task: taskId, content });
+
+export const updateComment = (commentId, content) =>
+  api.patch(`/comments/${commentId}/`, { content });
+
+export const deleteComment = (commentId) =>
+  api.delete(`/comments/${commentId}/`);
+
+export default api;
