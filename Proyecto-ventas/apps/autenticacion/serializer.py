@@ -1,24 +1,18 @@
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
-from django.contrib.auth import authenticate
 
 
-class LoginSerializer(serializers.Serializer):
+class CustomTokenSerializer(TokenObtainPairSerializer):
 
-    username = serializers.CharField()
-    password = serializers.CharField(write_only=True)
+    def validate(self, attrs):
+        data = super().validate(attrs)
 
-    def validate(self, data):
-
-        user = authenticate(
-            username=data['username'],
-            password=data['password']
-        )
-
-        if not user:
-            raise serializers.ValidationError("Credenciales inválidas")
-
-        if not user.is_active:
+        # 👇 aquí puedes meter lógica como la que tenías
+        if not self.user.is_active:
             raise serializers.ValidationError("Usuario inactivo")
 
-        data['user'] = user
+        # 👇 agregar datos extra al response
+        data['rol'] = self.user.rol
+        data['username'] = self.user.username
+
         return data

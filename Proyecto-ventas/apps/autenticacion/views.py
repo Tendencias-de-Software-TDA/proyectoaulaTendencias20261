@@ -1,24 +1,21 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from .serializer import LoginSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from drf_yasg.utils import swagger_auto_schema
- 
-class LoginView(APIView):
- 
+
+
+class CustomTokenSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['rol'] = user.rol
+        return token
+
+
+class LoginView(TokenObtainPairView):
+    serializer_class = CustomTokenSerializer
+
     @swagger_auto_schema(
-        request_body=LoginSerializer,  
-        operation_description="Endpoint para autenticación de usuarios"
+        operation_description="Endpoint para autenticación de usuarios con JWT"
     )
-    def post(self, request):
- 
-        serializer = LoginSerializer(data=request.data)
- 
-        if serializer.is_valid():
-            user = serializer.validated_data['user']
- 
-            return Response({
-                "message": "Login exitoso"
-            }, status=status.HTTP_200_OK)
- 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
