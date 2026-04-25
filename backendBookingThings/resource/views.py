@@ -8,7 +8,7 @@ from .serializers import ResourceSerializer
 
 from .models import Reservation
 from .serializers import ReservationSerializer
-from .services import is_resource_available
+from .services import is_resource_available, promote_waitlist, sendFakeEmail, validate_cancel
 
 
 from rest_framework.decorators import action
@@ -93,17 +93,51 @@ class ReservationViewSet(viewsets.ModelViewSet):
         date = serializer.validated_data["date"]
         startAt = serializer.validated_data["startAt"].hour
         endsAt = serializer.validated_data["endsAt"].hour
+        waitList = serializer.validated_data["waitList"]
 
-        available, message = is_resource_available(resource, date, startAt, endsAt)
+        available, message = is_resource_available(resource, date, startAt, endsAt, waitList)
 
         if not available:
             raise ValidationError({"detail": message})
 
-        serializer.save(user=self.request.user)
+        reservation = serializer.save(user=self.request.user)
+
+        if waitList == True:
+            sendFakeEmail(reservation, 'wait_list')
+
+
+    def perform_update(self, serializer):
+        instance = self.get_object()
+        old_status = instance.status
+
+        new_status = serializer.validated_data.get("status", old_status)
+
+        # if new_status == "cancelled":
+        #     validate_cancel(instance)
+
+        updated_instance = serializer.save()
+
+        # PROMOTE WAITLIST + EMAIL
+        if updated_instance.status in ["cancelled", "finished"]:
+            promote_waitlist(updated_instance)
+            sendFakeEmail(updated_instance, 'cancelation')
+
+        # EMAIL CONFIRMATION
+        if updated_instance.status == "confirmed":
+            sendFakeEmail(updated_instance, 'confirmation')
+
+
+
         
     @action(detail=False, methods=["get"])
     def byUser(self, request):
         user = request.user
         reservations = Reservation.objects.filter(user=user)
+        serializer = self.get_serializer(reservations, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=["get"])
+    def waitList(self, request):
+        reservations = Reservation.objects.filter(waitList=True)
         serializer = self.get_serializer(reservations, many=True)
         return Response(serializer.data)

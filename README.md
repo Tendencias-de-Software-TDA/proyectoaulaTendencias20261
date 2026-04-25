@@ -42,6 +42,11 @@ Install Documentation Library
   pip install drf-spectacular
 ```
 
+Install CORS manager for Django
+```bash
+ pip install django-cors-headers
+```
+
 Run project
 ```bash
   python manage.py runserver

@@ -1,0 +1,22 @@
+{
+  "name": "frontendbookingthings",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^0.0.0-insiders.f3fdda2",
+    "axios": "^1.14.0",
+    "vue": "^3.5.30",
+    "vue-router": "^4.6.4"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.5",
+    "daisyui": "^5.5.19",
+    "vite": "^8.0.1"
+  }
+}
