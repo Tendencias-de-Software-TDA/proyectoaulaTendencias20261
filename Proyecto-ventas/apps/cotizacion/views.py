@@ -22,33 +22,20 @@ class CotizacionViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def convertir_a_factura(self, request, pk=None):
+
         cotizacion = self.get_object()
 
-        
-        if cotizacion.estado in ['borrador', 'rechazada', 'vencida']:
-            return Response(
-                {"error": "No se puede convertir esta cotización"},
-                status=status.HTTP_400_BAD_REQUEST
+        try:
+            factura = Factura.crear_desde_cotizacion(
+                cotizacion,
+                dias_vencimiento=30
             )
 
-        
-        if hasattr(cotizacion, 'factura'):
+        except ValidationError as exc:
             return Response(
-                {"error": "La cotización ya fue convertida en factura"},
+                {"error": exc.message},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
-        
-        factura = Factura.objects.create(
-            cotizacion=cotizacion,
-            cliente=cotizacion.cliente,
-            subtotal=cotizacion.subtotal,
-            iva=cotizacion.iva,
-            total=cotizacion.total,
-            saldo_pendiente=cotizacion.total,
-            fecha_vencimiento=timezone.now().date() + timedelta(days=30),
-            estado=Factura.Estado.PENDIENTE
-        )
 
         return Response({
             "message": "Factura creada correctamente",
