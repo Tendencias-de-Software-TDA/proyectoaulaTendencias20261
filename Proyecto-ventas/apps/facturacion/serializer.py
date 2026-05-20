@@ -24,24 +24,6 @@ class FacturaSerializer(serializers.ModelSerializer):
 class ConvertirFacturaSerializer(serializers.Serializer):
     cotizacion_id = serializers.IntegerField()
 
-    def validate(self, data):
-
-        cotizacion = Cotizacion.objects.filter(id=data['cotizacion_id']).first()
-
-        if not cotizacion:
-            raise serializers.ValidationError("La cotización no existe")
-
-        if cotizacion.estado != Cotizacion.Estado.ACEPTADA:
-            raise serializers.ValidationError("Solo cotizaciones aceptadas pueden convertirse")
-
-        from .models import Factura
-
-        if Factura.objects.filter(cotizacion=cotizacion).exists():
-            raise serializers.ValidationError("Esta cotización ya fue facturada")
-
-        data['cotizacion'] = cotizacion
-        return data
-
 
 class AnularFacturaSerializer(serializers.Serializer):
     motivo = serializers.CharField()
