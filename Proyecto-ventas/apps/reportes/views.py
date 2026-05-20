@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -10,6 +12,7 @@ from .services.ventas import obtener_ventas_totales
 from .services.productos import obtener_productos_top
 from .services.clientes import obtener_clientes_top
 from .services.cobros import obtener_tasa_cobro
+from .services.cartera import obtener_reporte_cartera
 from apps.facturacion.models import Factura
 
 
@@ -111,3 +114,23 @@ class ReportesViewSet(viewsets.ViewSet):
         }
 
         return Response(data)
+
+    @swagger_auto_schema(
+        operation_summary="Reporte de cartera (facturas con saldo por cliente)",
+        responses={
+            200: openapi.Response(
+                description='Cartera con antigüedad de saldos por tramos.',
+            ),
+        },
+    )
+    @action(detail=False, methods=['get'])
+    def cartera(self, request):
+
+        facturas_cartera = Factura.objects.filter(
+            estado=Factura.Estado.PENDIENTE,
+            saldo_pendiente__gt=Decimal('0.00'),
+        )
+
+        payload = obtener_reporte_cartera(facturas_cartera)
+
+        return Response(payload)

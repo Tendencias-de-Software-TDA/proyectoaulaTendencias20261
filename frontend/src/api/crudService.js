@@ -92,5 +92,11 @@ export const facturaApi = {
     const { data } = await api.post("/factura/convertir/", { cotizacion_id });
     return data;
   },
+
+  /** Anula la factura (obliga motivo; validación en servidor). */
+  async anular(id, motivo) {
+    const { data } = await api.post(`/factura/${id}/anular/`, { motivo });
+    return data;
+  },
 };
 export const pagoApi = createCrudService("/pago/");

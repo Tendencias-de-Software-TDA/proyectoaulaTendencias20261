@@ -22,7 +22,8 @@ it("renderiza los links de navegación", () => {
     </MemoryRouter>
   );
 
-  expect(screen.getByText("Dashboard")).toBeInTheDocument();
+  expect(screen.getByText("Reporte financiero")).toBeInTheDocument();
+  expect(screen.getByText("Cartera")).toBeInTheDocument();
   expect(screen.getByText("Clientes")).toBeInTheDocument();
   expect(screen.getByText("Productos")).toBeInTheDocument();
   expect(screen.getByText("Facturas")).toBeInTheDocument();

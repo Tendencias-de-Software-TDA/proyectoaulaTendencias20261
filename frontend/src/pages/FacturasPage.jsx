@@ -7,11 +7,11 @@ function FacturasPage() {
     <ResourceCrudPage
       service={facturaApi}
       title="Facturas"
-      subtitle="Genera y consulta facturas a partir de cotizaciones. Lleva el control de pagos, estados y saldos pendientes de tus clientes."
+      subtitle="Genera y consulta facturas a partir de cotizaciones. Lleva el control de pagos, estados y saldos pendientes de tus clientes. Editar permite cambiar la fecha de vencimiento; si escribes un motivo de anulación, se ejecuta la acción 'anular' en la API (no aplica si la factura ya está anulada)."
       emptyTableMessage="No hay facturas registradas."
       hideCreateButton={false}
       createFields={["cotizacion_id"]}
-      editFields={["fecha_anulacion", "fecha_vencimiento", "motivo_anulacion"]}
+      editFields={["fecha_vencimiento", "motivo_anulacion"]}
       onCreate={async (payload) => {
         const id = Number(payload?.cotizacion_id);
         if (!id || Number.isNaN(id)) {
@@ -19,13 +19,34 @@ function FacturasPage() {
         }
         await facturaApi.convertirDesdeCotizacion(id);
       }}
-      onUpdate={async (id, payload) => {
-        const body = {
-          fecha_anulacion: payload?.fecha_anulacion ?? null,
-          fecha_vencimiento: payload?.fecha_vencimiento ?? null,
-          motivo_anulacion: payload?.motivo_anulacion ?? null,
-        };
-        await facturaApi.update(id, body);
+      onUpdate={async (id, payload, row = {}) => {
+        const fechaVenc = payload?.fecha_vencimiento;
+
+        /** Motivo nuevo: solo se usa para llamar `anular`; no va en PATCH (read-only en DRF). */
+        const motivo = String(payload?.motivo_anulacion ?? "").trim();
+        const estado = String(row?.estado ?? "");
+        const yaAnulada = estado === "anulada";
+
+        const patchBody = {};
+        if (fechaVenc != null && String(fechaVenc).trim() !== "") {
+          patchBody.fecha_vencimiento = fechaVenc;
+        }
+
+        if (Object.keys(patchBody).length > 0) {
+          await facturaApi.update(id, patchBody);
+        }
+
+        if (motivo.length > 0 && !yaAnulada) {
+          await facturaApi.anular(id, motivo);
+        }
+
+        if (Object.keys(patchBody).length === 0 && (motivo.length === 0 || yaAnulada)) {
+          throw new Error(
+            yaAnulada
+              ? "Indique una nueva fecha de vencimiento si desea actualizar la factura anulada."
+              : "Indique fecha de vencimiento o un motivo de anulación para aplicar cambios.",
+          );
+        }
       }}
       extraRowActions={(row) => (
         <button

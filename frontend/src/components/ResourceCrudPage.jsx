@@ -202,7 +202,7 @@ function ResourceCrudPage({
 				});
 			} else if (editingRow?.id != null) {
 				if (typeof onUpdate === "function") {
-					await onUpdate(editingRow.id, payload);
+					await onUpdate(editingRow.id, payload, editingRow);
 				} else {
 					let body = { ...payload };
 					delete body.id;

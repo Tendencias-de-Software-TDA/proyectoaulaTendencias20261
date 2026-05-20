@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import viewsets, status
 from .models import Cotizacion
 from .serializer import CotizacionSerializer
@@ -31,9 +32,14 @@ class CotizacionViewSet(viewsets.ModelViewSet):
                 dias_vencimiento=30
             )
 
-        except ValidationError as exc:
+        except DjangoValidationError as exc:
+            detail = getattr(exc, "message", None) or (
+                " ".join(str(m) for m in exc.messages)
+                if getattr(exc, "messages", None)
+                else str(exc)
+            )
             return Response(
-                {"error": exc.message},
+                {"detail": detail},
                 status=status.HTTP_400_BAD_REQUEST
             )
 

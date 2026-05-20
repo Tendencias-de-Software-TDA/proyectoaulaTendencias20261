@@ -21,7 +21,10 @@ function Navbar({ onLogout }) {
 
       <nav className="app-navbar__links" aria-label="Principal">
         <NavLink to="/" end className={navClass}>
-          Dashboard
+          Reporte financiero
+        </NavLink>
+        <NavLink to="/cartera" className={navClass}>
+          Cartera
         </NavLink>
         <NavLink to="/clientes" className={navClass}>
           Clientes

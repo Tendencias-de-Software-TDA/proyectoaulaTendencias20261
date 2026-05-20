@@ -1112,3 +1112,80 @@ a {
     width: 100%;
   }
 }
+
+/* Reporte financiero */
+.reporte-financiero__filtros-inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.reporte-financiero__date input {
+  min-height: 2.35rem;
+  margin-top: 0.25rem;
+}
+
+.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.report-table th,
+.report-table td {
+  padding: 0.65rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-gray-200, #e8e8e8);
+}
+
+.report-table thead th {
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.reporte-financiero__operativo {
+  margin-top: 1rem;
+}
+
+.cartera-meta {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  color: var(--text-muted, #555);
+}
+
+.cartera-cliente-box {
+  margin-bottom: 1.5rem;
+}
+
+.cartera-cliente-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.cartera-cliente-saldo {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.cartera-tramos-mini {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+
+.cartera-tramo-chip {
+  font-size: 0.72rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  background: var(--color-gray-100, #f2f2f2);
+  color: var(--text-muted, #555);
+}

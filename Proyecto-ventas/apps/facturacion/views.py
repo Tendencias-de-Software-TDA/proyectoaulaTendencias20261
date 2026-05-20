@@ -14,6 +14,15 @@ from apps.cotizacion.models import Cotizacion
 from apps.usuarios.permissions import EsContadorOAdmin
 
 
+def _django_validation_detail(exc: ValidationError) -> str:
+    if getattr(exc, "message", None) is not None:
+        return str(exc.message)
+    msgs = getattr(exc, "messages", None)
+    if msgs:
+        return " ".join(str(m) for m in msgs)
+    return str(exc)
+
+
 class FacturaViewSet(viewsets.ModelViewSet):
 
     queryset = Factura.objects.all()
@@ -47,7 +56,7 @@ class FacturaViewSet(viewsets.ModelViewSet):
 
         except ValidationError as exc:
             return Response(
-                {"detail": exc.message},
+                {"detail": _django_validation_detail(exc)},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -75,7 +84,7 @@ class FacturaViewSet(viewsets.ModelViewSet):
 
         except ValidationError as exc:
             return Response(
-                {"detail": exc.message},
+                {"detail": _django_validation_detail(exc)},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
