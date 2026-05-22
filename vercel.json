@@ -6,6 +6,7 @@
       "maxDuration": 30
     }
   },
+  "buildCommand": "cd backend && python manage.py migrate --run-syncdb",
   "routes": [
     {
       "src": "/(.*)",
