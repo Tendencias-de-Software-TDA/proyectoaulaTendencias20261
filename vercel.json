@@ -15,5 +15,7 @@
       "src": "/(.*)",
       "dest": "backend/backend/wsgi.py"
     }
-  ]
+  ],
+  "installCommand": "cd backend && pip install -r requirements.txt",
+  "buildCommand": "cd backend && python manage.py collectstatic --noinput && python manage.py migrate"
 }
