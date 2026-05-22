@@ -100,6 +100,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         completed = tasks.filter(status='completed').count()
         pending = tasks.filter(status='pending').count()
         in_progress = tasks.filter(status='in_progress').count()
+        in_review = tasks.filter(status='in_review').count()
         cancelled = tasks.filter(status='cancelled').count()
         overdue = tasks.filter(
             due_date__lt=timezone.now()
@@ -117,6 +118,8 @@ class ProjectViewSet(viewsets.ModelViewSet):
         avg_seconds = completed_tasks.aggregate(avg=Avg('resolution_time'))['avg']
         avg_hours = round(avg_seconds.total_seconds() / 3600, 2) if avg_seconds else None
 
+        completion_rate = round((completed / total * 100), 1) if total > 0 else 0
+
         return Response({
             'project_id': str(project.id),
             'project_name': project.name,
@@ -125,9 +128,11 @@ class ProjectViewSet(viewsets.ModelViewSet):
             'completed': completed,
             'pending': pending,
             'in_progress': in_progress,
+            'in_review': in_review,
             'cancelled': cancelled,
             'overdue': overdue,
             'avg_resolution_hours': avg_hours,
+            'completion_rate_percent': completion_rate,
         })
 
 
