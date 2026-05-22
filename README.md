@@ -166,7 +166,7 @@ La API usa JWT. Para autenticarse:
 POST /api/token/
 {
   "username": "admin",
-  "password": "admin"
+  "password": "admin123"
 }
 ```
 
