@@ -1,6 +1,6 @@
 # Gestor de Tareas y Productividad
 
-Aplicación fullstack para la gestión integral de tareas personales y de equipo, organizada por proyectos, con colaboración en tiempo real, control de roles, etiquetas, comentarios y tablero Kanban interactivo.
+Aplicación fullstack para la gestión integral de tareas personales y de equipo, organizada por proyectos, con colaboración en tiempo real, control de roles, etiquetas, comentarios, tablero Kanban interactivo y métricas de productividad.
 
 ---
 
@@ -19,6 +19,18 @@ Aplicación fullstack para la gestión integral de tareas personales y de equipo
 
 ---
 
+## Despliegue en Producción
+
+| Servicio | URL |
+|---|---|
+| Frontend (Vercel) | https://proyectoaula-tendencias-20261.vercel.app |
+| Backend / API (Vercel) | https://proyectoaula-tendencias-20261-backend.vercel.app |
+| Swagger UI | https://proyectoaula-tendencias-20261-backend.vercel.app/api/docs/ |
+
+> Las URLs exactas pueden consultarse en la configuración del repositorio en Vercel.
+
+---
+
 ## Tecnologías
 
 ### Backend
@@ -33,7 +45,7 @@ Aplicación fullstack para la gestión integral de tareas personales y de equipo
 - React 18 + Vite
 - JavaScript (ES6+)
 - CSS personalizado (sin frameworks externos)
-- Vitest + @testing-library/react (pruebas unitarias)
+- Vitest + @testing-library/react (pruebas unitarias frontend)
 
 ---
 
@@ -42,15 +54,18 @@ Aplicación fullstack para la gestión integral de tareas personales y de equipo
 ```
 proyectoaulaTendencias20261/
 ├── backend/
-│   ├── tasks/          # App principal: modelos, vistas, serializers
-│   ├── users/          # Gestión de usuarios y autenticación
+│   ├── api/            # URLs principales del router
+│   ├── backend/        # Configuración Django (settings, wsgi)
+│   ├── projects/       # Proyectos, membresías, roles, métricas
+│   ├── tasks/          # Tareas, etiquetas, comentarios, historial
+│   ├── users/          # Usuarios, autenticación, métricas de usuario
 │   └── manage.py
 └── frontend/
     ├── src/
-    │   ├── components/ # Kanban, Proyectos, Auth, UI común
+    │   ├── components/ # Auth, Proyectos, Tareas, Kanban, Métricas, UI
     │   ├── api/        # Llamadas a la API REST
     │   ├── constants/  # Estados y prioridades
-    │   └── test/       # Pruebas unitarias
+    │   └── test/       # Pruebas unitarias frontend
     └── vite.config.js
 ```
 
@@ -64,7 +79,7 @@ proyectoaulaTendencias20261/
 
 ---
 
-## Instalación y Configuración
+## Instalación y Configuración Local
 
 ### Backend
 
@@ -90,6 +105,7 @@ source entorno/bin/activate
 
 **3. Instalar dependencias**
 ```bash
+cd backend
 pip install -r requirements.txt
 ```
 
@@ -103,10 +119,7 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-La API estará disponible en:
-```
-http://127.0.0.1:8000/
-```
+La API estará disponible en `http://127.0.0.1:8000/`
 
 ---
 
@@ -118,10 +131,7 @@ npm install
 npm run dev
 ```
 
-El frontend estará disponible en:
-```
-http://localhost:5173/
-```
+El frontend estará disponible en `http://localhost:5173/`
 
 ---
 
@@ -185,15 +195,27 @@ POST /api/token/refresh/
 | PUT/PATCH | /api/users/{id}/ | Editar usuario | Sí |
 | GET | /api/users/profile/ | Ver perfil propio | Sí |
 | POST | /api/users/logout/ | Cerrar sesión | Sí |
+| GET | /api/users/{id}/metrics/ | Métricas de productividad del usuario | Sí |
 
 ### Proyectos
 | Método | Endpoint | Descripción | Auth |
 |---|---|---|---|
-| POST | /api/projects/ | Crear proyecto | Sí (solo admin) |
-| GET | /api/projects/ | Listar proyectos | Sí |
-| GET | /api/projects/{id}/ | Ver proyecto | Sí |
-| PUT/PATCH | /api/projects/{id}/ | Editar proyecto | Sí (solo admin) |
-| DELETE | /api/projects/{id}/ | Eliminar proyecto | Sí (solo admin) |
+| POST | /api/projects/ | Crear proyecto | Sí |
+| GET | /api/projects/ | Listar proyectos del usuario | Sí |
+| GET | /api/projects/{id}/ | Ver proyecto | Sí (miembros) |
+| PUT/PATCH | /api/projects/{id}/ | Editar proyecto | Sí (owner/editor) |
+| DELETE | /api/projects/{id}/ | Eliminar proyecto | Sí (owner/admin) |
+| POST | /api/projects/{id}/archive/ | Archivar proyecto | Sí (owner/admin) |
+| POST | /api/projects/{id}/reactivate/ | Reactivar proyecto | Sí (owner/admin) |
+| GET | /api/projects/{id}/metrics/ | Métricas del proyecto | Sí (miembros) |
+
+### Membresías
+| Método | Endpoint | Descripción | Auth |
+|---|---|---|---|
+| GET | /api/memberships/ | Listar membresías | Sí |
+| POST | /api/memberships/ | Agregar miembro al proyecto | Sí (owner/admin) |
+| PUT/PATCH | /api/memberships/{id}/ | Cambiar rol de miembro | Sí (owner/admin) |
+| DELETE | /api/memberships/{id}/ | Eliminar miembro | Sí (owner/admin) |
 
 ### Tareas
 | Método | Endpoint | Descripción | Auth |
@@ -204,15 +226,23 @@ POST /api/token/refresh/
 | PUT/PATCH | /api/tasks/{id}/ | Editar tarea | Sí |
 | DELETE | /api/tasks/{id}/ | Eliminar tarea | Sí |
 
-### Comentarios *(nuevo en entregable 2)*
+### Historial de Tareas *(entregable 3)*
 | Método | Endpoint | Descripción | Auth |
 |---|---|---|---|
-| GET | /api/tasks/{id}/comments/ | Listar comentarios | Sí |
-| POST | /api/tasks/{id}/comments/ | Agregar comentario | Sí |
+| GET | /api/history/ | Listar historial general | Sí |
+| GET | /api/history/?task={id} | Filtrar historial por tarea | Sí |
+
+> El historial se genera automáticamente al cambiar `status` o `priority` de una tarea.
+
+### Comentarios
+| Método | Endpoint | Descripción | Auth |
+|---|---|---|---|
+| GET | /api/comments/ | Listar comentarios | Sí |
+| POST | /api/comments/ | Agregar comentario | Sí |
 | PUT/PATCH | /api/comments/{id}/ | Editar comentario | Sí (solo autor) |
 | DELETE | /api/comments/{id}/ | Eliminar comentario | Sí (solo autor) |
 
-### Etiquetas *(nuevo en entregable 2)*
+### Etiquetas
 | Método | Endpoint | Descripción | Auth |
 |---|---|---|---|
 | GET | /api/tags/ | Listar etiquetas | Sí |
@@ -231,30 +261,55 @@ POST /api/token/refresh/
 
 ---
 
-## Pruebas Unitarias (Entregable 2)
+## Roles en Proyectos
 
-El proyecto incluye **17 pruebas unitarias** en el frontend ubicadas en `frontend/src/test/`:
+| Rol | Permisos |
+|---|---|
+| `owner` | Crear, editar, archivar, reactivar proyecto; gestionar miembros y roles |
+| `editor` | Crear y editar tareas dentro del proyecto |
+| `observer` | Solo lectura: ver proyecto y tareas |
+
+> Un usuario externo al proyecto recibe `404` al intentar acceder a él.
+
+---
+
+## Métricas disponibles
+
+### Métricas de proyecto — `GET /api/projects/{id}/metrics/`
+Retorna: total de tareas, desglose por estado, tareas vencidas, tasa de completitud (%), tiempo promedio de resolución en horas.
+
+### Métricas de usuario — `GET /api/users/{id}/metrics/`
+Retorna: total de tareas asignadas, tareas completadas, tareas vencidas, tasa de cumplimiento (%).
+
+---
+
+## Pruebas
+
+### Backend (Django TestCase)
+
+```bash
+cd backend
+python manage.py test
+```
+
+| App | Archivo | Tests | Qué valida |
+|---|---|---|---|
+| users | `users/tests.py` | 7 | Registro, login, perfil, métricas de usuario |
+| projects | `projects/tests.py` | 3 | Permisos por rol: owner, editor, observer, externos |
+| tasks | `tasks/tests.py` | 4 | Historial automático, bloqueo en proyecto archivado |
+
+### Frontend (Vitest)
+
+```bash
+cd frontend
+npm test
+```
 
 | Archivo | Tests | Qué valida |
 |---|---|---|
 | `roles.test.jsx` | 5 | Permisos por rol: owner, editor, observer |
 | `tags.test.jsx` | 5 | Agregar, eliminar y validar etiquetas |
 | `comments.test.jsx` | 7 | Crear, editar, eliminar y validar comentarios |
-
-**Ejecutar pruebas:**
-```bash
-cd frontend
-npm test
-```
-
-Resultado esperado:
-```
-✓ comments.test.jsx  (7 tests)
-✓ roles.test.jsx     (5 tests)
-✓ tags.test.jsx      (5 tests)
-Test Files  3 passed (3)
-Tests      17 passed (17)
-```
 
 ---
 
@@ -271,6 +326,7 @@ Con el servidor backend corriendo:
 
 | Rama | Descripción |
 |---|---|
-| `main` | Código estable |
-| `entregable1` | Entrega 1 — API REST base |
-| `entregable2` | Entrega 2 — Frontend + colaboración + pruebas |
+| `main` | Código estable y actualizado |
+| `entregable1` | Entrega 1 — API REST base con autenticación JWT |
+| `entregable2` | Entrega 2 — Frontend + colaboración + pruebas unitarias |
+| `entregable3` | Entrega 3 — Métricas, historial, roles avanzados, archivado |
