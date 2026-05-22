@@ -41,6 +41,9 @@ function Navbar({ onLogout }) {
         <NavLink to="/pagos" className={navClass}>
           Pagos
         </NavLink>
+        <NavLink to="/notas-credito" className={navClass}>
+          Notas crédito
+        </NavLink>
         <Button type="button" variant="ghost" size="sm" onClick={onLogout}>
           Cerrar sesión
         </Button>

@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'apps.usuarios',
     'apps.facturacion',
     'apps.pagos',
+    'apps.notas_credito',
     'apps.reportes',
 ]
 

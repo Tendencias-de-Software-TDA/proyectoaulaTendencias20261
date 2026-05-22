@@ -55,6 +55,9 @@ export function createCrudService(path) {
       if (data?.pago && typeof data.pago === "object") {
         return data.pago;
       }
+      if (data?.nota_credito && typeof data.nota_credito === "object") {
+        return data.nota_credito;
+      }
       return data;
     },
 
@@ -100,3 +103,4 @@ export const facturaApi = {
   },
 };
 export const pagoApi = createCrudService("/pago/");
+export const notaCreditoApi = createCrudService("/nota-credito/");
