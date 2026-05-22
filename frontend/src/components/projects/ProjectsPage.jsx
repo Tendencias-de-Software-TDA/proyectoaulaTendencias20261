@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
-import api from "../../api/api";
+import {
+  getProjects,
+  createProject,
+  updateProject,
+  deleteProject as deleteProjectRequest,
+} from "../../api/api";
 import Spinner from "../common/Spinner";
 import Alert from "../common/Alert";
 
@@ -15,7 +20,7 @@ export default function ProjectsPage({ user, onSelectProject }) {
   const load = async () => {
     setLoading(true);
     try {
-      const data = await api.get("/projects/");
+      const data = await getProjects();
       setProjects(Array.isArray(data) ? data : (data?.results || []));
     } catch (e) {
       setError(e?.data?.detail || "Error al cargar proyectos");
@@ -43,10 +48,10 @@ export default function ProjectsPage({ user, onSelectProject }) {
     setError("");
     try {
       if (modal === "new") {
-        const created = await api.post("/projects/", form);
+        const created = await createProject(form);
         setProjects(p => [created, ...p]);
       } else {
-        const updated = await api.patch(`/projects/${modal.id}/`, form);
+        const updated = await updateProject(modal.id, form);
         setProjects(p => p.map(x => x.id === modal.id ? updated : x));
       }
       setModal(null);
@@ -58,7 +63,7 @@ export default function ProjectsPage({ user, onSelectProject }) {
 
   const deleteProject = async (id) => {
     try {
-      await api.delete(`/projects/${id}/`);
+      await deleteProjectRequest(id);
       setProjects(p => p.filter(x => x.id !== id));
       setDeleteConfirm(null);
     } catch (e) {
