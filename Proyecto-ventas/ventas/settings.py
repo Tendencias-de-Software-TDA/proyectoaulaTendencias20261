@@ -54,7 +54,13 @@ INSTALLED_APPS = [
     'apps.cotizacion',
     'apps.usuarios',
     'apps.facturacion',
+<<<<<<< Updated upstream
     'apps.pagos'
+=======
+    'apps.pagos',
+    'apps.notas_credito',
+    'apps.reportes',
+>>>>>>> Stashed changes
 ]
 
 AUTH_USER_MODEL = 'usuarios.Usuario'

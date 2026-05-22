@@ -9,6 +9,7 @@ import ProductosPage from "./pages/ProductosPage.jsx";
 import CotizacionesPage from "./pages/CotizacionesPage.jsx";
 import FacturasPage from "./pages/FacturasPage.jsx";
 import PagosPage from "./pages/PagosPage.jsx";
+import NotasCreditoPage from "./pages/NotasCreditoPage.jsx";
 import NotFoundPage from "./pages/NotFoundPage.jsx";
 
 function App() {
@@ -35,6 +36,7 @@ function App() {
         <Route path="cotizaciones" element={<CotizacionesPage />} />
         <Route path="facturas" element={<FacturasPage />} />
         <Route path="pagos" element={<PagosPage />} />
+        <Route path="notas-credito" element={<NotasCreditoPage />} />
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />

@@ -64,5 +64,75 @@ class Factura(models.Model):
         self.estado = self.Estado.PAGADA if self.saldo_pendiente == Decimal('0.00') else self.Estado.PENDIENTE
         self.save(update_fields=['saldo_pendiente', 'estado'])
 
+<<<<<<< Updated upstream
+=======
+    def validar_nota_credito(self, monto):
+
+        if monto <= Decimal('0.00'):
+            raise ValidationError(
+                "El monto de la nota crédito debe ser mayor a cero"
+            )
+
+        if self.estado == self.Estado.ANULADA:
+            raise ValidationError(
+                "No se pueden registrar notas crédito en facturas anuladas"
+            )
+
+        if self.estado != self.Estado.PAGADA:
+            raise ValidationError(
+                "Solo se permiten notas crédito sobre facturas pagadas"
+            )
+
+        credito_disponible = self.total - self.saldo_pendiente
+        if monto > credito_disponible:
+            raise ValidationError(
+                "El monto supera el crédito disponible para esta factura"
+            )
+
+    def aplicar_nota_credito(self, monto):
+
+        self.validar_nota_credito(monto)
+
+        self.saldo_pendiente += monto
+
+        if self.saldo_pendiente > self.total:
+            self.saldo_pendiente = self.total
+
+        self.estado = (
+            self.Estado.PENDIENTE
+            if self.saldo_pendiente > Decimal('0.00')
+            else self.Estado.PAGADA
+        )
+
+        self.save(update_fields=['saldo_pendiente', 'estado'])
+
+    def anular(self, motivo):
+
+        if self.estado == self.Estado.ANULADA:
+            raise ValidationError(
+                "La factura ya se encuentra anulada"
+            )
+
+        if self.pagos.exists():
+            raise ValidationError(
+                "No se puede anular la factura porque tiene pagos registrados"
+            )
+
+        if not motivo.strip():
+            raise ValidationError(
+                "El motivo es obligatorio"
+            )
+
+        self.estado = self.Estado.ANULADA
+        self.motivo_anulacion = motivo
+        self.fecha_anulacion = timezone.now()
+
+        self.save(update_fields=[
+            'estado',
+            'motivo_anulacion',
+            'fecha_anulacion'
+        ])
+
+>>>>>>> Stashed changes
     def __str__(self):
         return f"Factura {self.numero}"
