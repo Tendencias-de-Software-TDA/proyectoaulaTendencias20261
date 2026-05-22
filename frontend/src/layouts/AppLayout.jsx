@@ -1,28 +1,14 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { useAuth } from "../context/useAuth.js";
+import Navbar from "../components/Navbar.jsx";
 
 function AppLayout() {
   const { logout } = useAuth();
 
   return (
-    <div className="app-shell">
-      <header>
-        <h1>Panel de Ventas</h1>
-        <button type="button" onClick={logout}>
-          Cerrar sesion
-        </button>
-      </header>
-
-      <nav>
-        <NavLink to="/">Dashboard</NavLink>
-        <NavLink to="/clientes">Clientes</NavLink>
-        <NavLink to="/productos">Productos</NavLink>
-        <NavLink to="/cotizaciones">Cotizaciones</NavLink>
-        <NavLink to="/facturas">Facturas</NavLink>
-        <NavLink to="/pagos">Pagos</NavLink>
-      </nav>
-
-      <main>
+    <div className="app-layout">
+      <Navbar onLogout={logout} />
+      <main className="app-main">
         <Outlet />
       </main>
     </div>

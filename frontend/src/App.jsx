@@ -4,6 +4,7 @@ import AppLayout from "./layouts/AppLayout.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
+import CarteraPage from "./pages/CarteraPage.jsx";
 import ClientesPage from "./pages/ClientesPage.jsx";
 import ProductosPage from "./pages/ProductosPage.jsx";
 import CotizacionesPage from "./pages/CotizacionesPage.jsx";
@@ -31,6 +32,7 @@ function App() {
         }
       >
         <Route index element={<DashboardPage />} />
+        <Route path="cartera" element={<CarteraPage />} />
         <Route path="clientes" element={<ClientesPage />} />
         <Route path="productos" element={<ProductosPage />} />
         <Route path="cotizaciones" element={<CotizacionesPage />} />

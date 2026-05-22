@@ -54,13 +54,9 @@ INSTALLED_APPS = [
     'apps.cotizacion',
     'apps.usuarios',
     'apps.facturacion',
-<<<<<<< Updated upstream
-    'apps.pagos'
-=======
     'apps.pagos',
     'apps.notas_credito',
     'apps.reportes',
->>>>>>> Stashed changes
 ]
 
 AUTH_USER_MODEL = 'usuarios.Usuario'
@@ -148,7 +144,7 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
-REST_FRAMEWORK = {
+REST_FRAMEWORK = { #por defecto exige autenticacion para todas las rutas
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),

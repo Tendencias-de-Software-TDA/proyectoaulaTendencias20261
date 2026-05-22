@@ -30,9 +30,17 @@ function normalizeError(error) {
   const status = error?.response?.status || 500;
   const data = error?.response?.data;
 
+  const detail = data?.detail ?? data?.message;
+  const message =
+    typeof detail === "string"
+      ? detail
+      : Array.isArray(detail)
+        ? detail.map((d) => (typeof d === "string" ? d : d?.string || "")).join(" ")
+        : "Error de conexion con el servidor";
+
   return {
     status,
-    message: data?.message || "Error de conexion con el servidor",
+    message,
     errors: data?.errors || [],
     raw: data || null,
   };

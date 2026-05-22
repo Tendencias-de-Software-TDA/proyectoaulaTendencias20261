@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # GRUPO 4: Gestion de ventas y facturacion
 
 
@@ -65,22 +64,24 @@ para actualizar un registro.
 
 ## Configuracion inicial:
 
-Se procede con la ejecucion de los comandos: <br>
-```
-pip install django
-pip install djangorestframework
-pip install drf-yasg
-pip install markdown
-```
+Se procede con la ejecucion de los comandos que nos permitiran instalar todas las depencias y paquetes: <br>
 
 Con esto tenemos los paquetes necesarios para el proyecto. Dentro de la jerarquia <br>
 se encuentra un requirements.txt que contiene los paquetes en la version especificada. <br>
 
->NOTA: el proyecto fue configurado con python 3.14.3
+>NOTA: el proyecto fue configurado con python 3.14.3 y Node.js 22.22.2
 
-Para instalar estos paquetes se puede ejecutar el comando
+>RECOMENDABLE: realizar la instalacion en un entorno virtual
+
+Para instalar estos paquetes se puede ejecutar el comando <br>
+dentro de la ruta: proyectoaulaTendencias20261\
 
 `pip install -r requirements.txt `
+
+Para instalar las dependencias de node se puede ejcutar el comando <br>
+dentro de la ruta: proyectoaulaTendencias20261\frontend
+
+`npm install`
 
 Inicialmente se crearon los modelos:
 
@@ -90,6 +91,8 @@ Inicialmente se crearon los modelos:
 -   ItemCotizacion
 -   Usuario
 -   Producto
+-   Pago
+-   Factura
 
 Y para cada uno de ellos un serializer que permite la visualizacion de los datos
 que se encuentran registrados en los modelos a través de un sus respectivos EndPoints
@@ -100,8 +103,49 @@ el servidor con el comando:
 
 `python manage.py runserver`
 
-Para acceder a la documentacion visite el endopint *[http://127.0.0.1:8000/swagger/](http://127.0.0.1:8000/swagger/)*
-cuando inicialice el servidor en la máquina local
-=======
+Y para iniciar el FrontEnd se debe usar el comando:
 
->>>>>>> d8135ff17a9b6e3d74fc0b35fe9cbf61971e4a58
+`npm run dev`
+
+Para acceder a la documentacion de la API visite el endopint *[http://127.0.0.1:8000/swagger/](http://127.0.0.1:8000/swagger/)*
+cuando inicialice el servidor en la máquina local
+
+# Front-End
+
+Ha sido construido usando React + Vite
+
+por defecto la aplicacion queda alojada en el puerto: http://localhost:5173
+
+>NOTA: en la vista del login, si aun no has creado un super usuario, haslo en la terminal con: python manage.py createsuperuser
+>con ese usuario y contraseña te puedes logear
+
+## Flujo funcional implementado
+
+1. LoginPage prueba conexion con GET /v1/health/.
+2. Login con POST /v1/login/.
+3. Tokens access/refresh guardados en localStorage.
+4. Axios envia Authorization: Bearer <access>.
+5. Si hay 401, se intenta refresh en POST /v1/login/refresh/.
+6. Si el refresh falla, se limpia sesion y se retorna error normalizado.
+7. Rutas protegidas solo accesibles con token.
+
+## Estructura principal
+
+- src/api/client.js: cliente axios + interceptores + refresh token.
+- src/api/authService.js: login, health y logout.
+- src/api/resourcesService.js: consumo de recursos de negocio.
+- src/context/AuthContext.jsx: estado global de autenticacion.
+- src/components/ProtectedRoute.jsx: guardia de rutas.
+- src/layouts/AppLayout.jsx: layout base navegable.
+- src/pages/*: paginas funcionales base para cada endpoint.
+
+## Endpoints conectados
+
+- GET /v1/health/
+- POST /v1/login/
+- POST /v1/login/refresh/
+- GET /v1/cliente/
+- GET /v1/producto/
+- GET /v1/cotizacion/
+- GET /v1/factura/
+- GET /v1/pago/

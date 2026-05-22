@@ -12,7 +12,7 @@ class ItemCotizacionSerializer(serializers.ModelSerializer):
 
 class CotizacionSerializer(serializers.ModelSerializer):
 
-    # 🔴 Se mantiene para lectura (GET)
+    
     items = ItemCotizacionSerializer(many=True, read_only=True)
 
     class Meta:
@@ -21,7 +21,7 @@ class CotizacionSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
 
-        # 🔥 FIX: tomar items desde request.data porque no viene en validated_data
+       
         items_data = self.context['request'].data.get('items', [])
 
         cotizacion = Cotizacion.objects.create(**validated_data)

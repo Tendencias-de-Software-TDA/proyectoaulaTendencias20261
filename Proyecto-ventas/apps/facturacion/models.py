@@ -1,6 +1,8 @@
 from django.db import models
 from decimal import Decimal
 from django.core.exceptions import ValidationError
+from django.utils import timezone
+
 from apps.clientes.models import Cliente
 from apps.cotizacion.models import Cotizacion
 
@@ -40,32 +42,76 @@ class Factura(models.Model):
     fecha_anulacion = models.DateTimeField(null=True, blank=True)
 
     def save(self, *args, **kwargs):
+
         if not self.numero:
             last = Factura.objects.order_by('-numero').first()
             self.numero = 1 if not last else last.numero + 1
+
         if self.saldo_pendiente is None:
             self.saldo_pendiente = self.total
+
         super().save(*args, **kwargs)
 
-    def aplicar_abono(self, monto):
+    @classmethod
+    def crear_desde_cotizacion(cls, cotizacion, dias_vencimiento=15):
+
+        if cotizacion.estado != Cotizacion.Estado.ACEPTADA:
+            raise ValidationError(
+                "Solo cotizaciones aceptadas pueden convertirse"
+            )
+
+        if hasattr(cotizacion, 'factura'):
+            raise ValidationError(
+                "La cotización ya fue facturada"
+            )
+
+        return cls.objects.create(
+            cotizacion=cotizacion,
+            cliente=cotizacion.cliente,
+            subtotal=cotizacion.subtotal,
+            iva=cotizacion.iva,
+            total=cotizacion.total,
+            saldo_pendiente=cotizacion.total,
+            fecha_vencimiento=timezone.now().date() + timezone.timedelta(days=dias_vencimiento),
+            estado=cls.Estado.PENDIENTE
+        )
+
+    def validar_pago(self, monto):
+
         if monto <= Decimal('0.00'):
-            raise ValidationError("El monto del pago debe ser mayor a cero")
+            raise ValidationError(
+                "El monto del pago debe ser mayor a cero"
+            )
 
         if self.estado == self.Estado.ANULADA:
-            raise ValidationError("No se pueden registrar pagos en facturas anuladas")
+            raise ValidationError(
+                "No se pueden registrar pagos en facturas anuladas"
+            )
 
-        if self.saldo_pendiente <= Decimal('0.00'):
-            raise ValidationError("La factura ya está pagada")
+        if self.estado == self.Estado.PAGADA:
+            raise ValidationError(
+                "La factura ya se encuentra pagada"
+            )
 
         if monto > self.saldo_pendiente:
-            raise ValidationError("El monto del pago no puede superar el saldo pendiente")
+            raise ValidationError(
+                "El monto del pago no puede superar el saldo pendiente"
+            )
+
+    def aplicar_abono(self, monto):
+
+        self.validar_pago(monto)
 
         self.saldo_pendiente -= monto
-        self.estado = self.Estado.PAGADA if self.saldo_pendiente == Decimal('0.00') else self.Estado.PENDIENTE
+
+        self.estado = (
+            self.Estado.PAGADA
+            if self.saldo_pendiente == Decimal('0.00')
+            else self.Estado.PENDIENTE
+        )
+
         self.save(update_fields=['saldo_pendiente', 'estado'])
 
-<<<<<<< Updated upstream
-=======
     def validar_nota_credito(self, monto):
 
         if monto <= Decimal('0.00'):
@@ -133,6 +179,5 @@ class Factura(models.Model):
             'fecha_anulacion'
         ])
 
->>>>>>> Stashed changes
     def __str__(self):
         return f"Factura {self.numero}"

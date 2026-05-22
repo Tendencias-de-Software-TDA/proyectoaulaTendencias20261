@@ -32,11 +32,8 @@ from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from apps.facturacion.views import FacturaViewSet
 from apps.pagos.views import PagoViewSet
-<<<<<<< Updated upstream
-=======
 from apps.notas_credito.views import NotaCreditoViewSet
 from apps.reportes.views import ReportesViewSet
->>>>>>> Stashed changes
 
 schema_view = get_schema_view(
    openapi.Info(
@@ -60,6 +57,7 @@ router.register(r'factura', viewset=FacturaViewSet, basename='factura')
 router.register(r'pago', viewset=PagoViewSet, basename='pago')
 router.register(r'nota-credito', viewset=NotaCreditoViewSet, basename='nota-credito')
 router.register(r'usuario', viewset = UsuarioViewSet, basename = 'usuario')
+router.register(r'reportes', viewset=ReportesViewSet,basename='reportes')
 
 
 @api_view(['GET'])

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { healthCheck } from "../api/authService";
 import { useAuth } from "../context/useAuth.js";
+import logo from "../assets/logofondo.png";
 
 function LoginPage() {
   const [username, setUsername] = useState("");
@@ -18,10 +19,10 @@ function LoginPage() {
 
   async function handleHealthCheck() {
     setLocalError("");
-    setHealthStatus("Verificando conexion...");
+    setHealthStatus("Verificando conexión...");
     try {
       const data = await healthCheck();
-      setHealthStatus(data.message || "Conexion correcta");
+      setHealthStatus(data.message || "Conexión correcta");
     } catch (error) {
       setHealthStatus("");
       setLocalError(error.message);
@@ -41,41 +42,70 @@ function LoginPage() {
     }
   }
 
+  const displayError = localError || authError;
+
   return (
-    <section>
-      <h2>Iniciar sesion</h2>
-
-      <button type="button" onClick={handleHealthCheck}>
-        Probar conexion API
-      </button>
-      {healthStatus && <p>{healthStatus}</p>}
-
-      <form onSubmit={handleSubmit}>
-        <label htmlFor="username">Usuario</label>
-        <input
-          id="username"
-          type="text"
-          value={username}
-          onChange={(event) => setUsername(event.target.value)}
-          required
+    <div className="login-page">
+      <div className="login-card">
+        <img
+          src={logo}
+          alt="Logo empresa"
+          className="login-card__brand-logo"
         />
+        <h1 className="login-card__title">Inicio de sesión</h1>
 
-        <label htmlFor="password">Contrasena</label>
-        <input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          required
-        />
+        <form className="login-form" onSubmit={handleSubmit} noValidate>
+          <label htmlFor="username">Usuario</label>
+          <input
+            id="username"
+            name="username"
+            type="text"
+            autoComplete="username"
+            placeholder="Username"
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            required
+          />
 
-        <button type="submit" disabled={isLoading}>
-          {isLoading ? "Ingresando..." : "Entrar"}
-        </button>
-      </form>
+          <label htmlFor="password">Contraseña</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            placeholder="Password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+          />
 
-      {(localError || authError) && <p>{localError || authError}</p>}
-    </section>
+          <button className="btn btn--primary" type="submit" disabled={isLoading}>
+            {isLoading ? "Ingresando…" : "Entrar"}
+          </button>
+        </form>
+
+        <div className="login-card__actions">
+          <button
+            className="btn btn--secondary"
+            type="button"
+            onClick={handleHealthCheck}
+          >
+            Probar conexión API
+          </button>
+          {healthStatus && (
+            <p className="login-card__status">{healthStatus}</p>
+          )}
+          {displayError && (
+            <p className="login-card__error" role="alert">
+              {displayError}
+            </p>
+          )}
+          <p className="login-card__hint">
+            Gestión de inventario · acceso restringido
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
 
