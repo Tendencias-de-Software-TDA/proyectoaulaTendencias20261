@@ -6,7 +6,7 @@
       "maxDuration": 30
     }
   },
-  "buildCommand": "python manage.py migrate --run-syncdb && python create_superuser.py",
+  "buildCommand": "python manage.py migrate --run-syncdb",
   "routes": [
     {
       "src": "/(.*)",
