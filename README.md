@@ -141,7 +141,7 @@ Crear los siguientes usuarios mediante `POST /api/users/`:
 {
   "username": "admin",
   "email": "admin@test.com",
-  "password": "admin",
+  "password": "admin123",
   "role": "admin"
 }
 ```
