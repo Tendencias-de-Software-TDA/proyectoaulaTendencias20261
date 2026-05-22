@@ -15,6 +15,13 @@ class AuthTest(TestCase):
         )
 
     def test_registro_usuario(self):
+        admin = User.objects.create_user(
+            username='admin',
+            password='pass1234',
+            email='admin@test.com',
+            role='admin'
+        )
+        self.client.force_authenticate(user=admin)
         response = self.client.post('/api/users/', {
             'username': 'nuevo',
             'password': 'pass1234',

@@ -28,7 +28,6 @@ api.interceptors.response.use(
   }
 );
 
-// Usuarios
 export const getUserProfile = () =>
   api.get("/users/profile/");
 
@@ -86,5 +85,11 @@ export const deleteComment = (commentId) =>
 // Historial
 export const getTaskHistory = (taskId) =>
   api.get(`/history/?task=${taskId}`);
+// Admin - usuarios
+export const createUser = (data) =>
+  api.post("/users/", data);
+
+export const toggleUserActive = (userId) =>
+  api.post(`/users/${userId}/toggle-active/`);
 
 export default api;

@@ -5,6 +5,7 @@ import LoginPage from "./components/auth/LoginPage";
 import ProjectsPage from "./components/projects/ProjectsPage";
 import KanbanBoard from "./components/tasks/KanbanBoard";
 import ProfilePage from "./components/users/ProfilePage";
+import AdminPage from "./components/users/AdminPage";
 import "./styles/global.css";
 
 export default function App() {
@@ -102,6 +103,9 @@ export default function App() {
             }}
           />
         )}
+
+        {/* ← Agrega esta línea */}
+        {page === "admin" && user?.is_admin && <AdminPage />}
       </main>
     </div>
   );
