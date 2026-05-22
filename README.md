@@ -23,11 +23,9 @@ Aplicación fullstack para la gestión integral de tareas personales y de equipo
 
 | Servicio | URL |
 |---|---|
-| Frontend (Vercel) | https://proyectoaula-tendencias-20261.vercel.app |
-| Backend / API (Vercel) | https://proyectoaula-tendencias-20261-backend.vercel.app |
-| Swagger UI | https://proyectoaula-tendencias-20261-backend.vercel.app/api/docs/ |
-
-> Las URLs exactas pueden consultarse en la configuración del repositorio en Vercel.
+| Frontend (Vercel) | https://proyectoaula-tendencias20261-aq3d.vercel.app |
+| Backend / API (Vercel) | https://proyectoaula-tendencias20261-two.vercel.app |
+| Swagger UI | https://proyectoaula-tendencias20261-two.vercel.app/api/docs/ |
 
 ---
 
