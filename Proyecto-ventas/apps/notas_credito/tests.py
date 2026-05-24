@@ -63,6 +63,15 @@ class NotaCreditoModelTests(TestCase):
         with self.assertRaises(ValidationError):
             self.factura.aplicar_nota_credito(Decimal('200.00'))
 
+    def test_str_incluye_numero_y_factura(self):
+        nota = NotaCredito.objects.create(
+            factura=self.factura,
+            motivo=NotaCredito.Motivo.DEVOLUCION,
+            monto=Decimal('10.00'),
+        )
+        self.assertIn('Nota crédito', str(nota))
+        self.assertIn(str(self.factura.numero), str(nota))
+
     def test_numero_nota_credito_autoincremental(self):
 
         nota = NotaCredito.objects.create(
