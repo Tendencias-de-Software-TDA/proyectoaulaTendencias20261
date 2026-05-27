@@ -63,12 +63,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
-if os.getenv('VERCEL'):
+DATABASE_URL = os.getenv('DATABASE_URL')
+
+if DATABASE_URL:
+    import dj_database_url
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': '/tmp/db.sqlite3',
-        }
+        'default': dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
     }
 else:
     DATABASES = {
@@ -77,7 +77,6 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-
 AUTH_USER_MODEL = 'users.User'
 
 AUTH_PASSWORD_VALIDATORS = [
