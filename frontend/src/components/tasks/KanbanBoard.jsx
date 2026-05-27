@@ -1,5 +1,4 @@
-import { useState } from "react";
-import Alert from "../common/Alert";
+import { useState, useEffect } from "react";
 import Spinner from "../common/Spinner";
 import { STATUS_COLS } from "../../constants/taskConstants";
 
@@ -8,11 +7,13 @@ import TaskModal from "./TaskModal";
 import DeleteTaskModal from "./DeleteTaskModal";
 import MembersModal from "./MembersModal";
 import ProjectMetrics from "../projects/ProjectMetrics";
-
+import Toast from "../common/Toast";
+import useToast from "../../hooks/useToast";
 import useKanbanBoard from "../../hooks/useKanbanBoard";
 
 export default function KanbanBoard({ project, user, onBack }) {
   const [metricsOpen, setMetricsOpen] = useState(false);
+  const { toast, showToast, hideToast } = useToast();
 
   const {
     tasks,
@@ -51,6 +52,10 @@ export default function KanbanBoard({ project, user, onBack }) {
     handleUpdateComment,
     handleDeleteComment,
   } = useKanbanBoard(project, user);
+
+  useEffect(() => {
+    if (error) showToast(error, "error");
+  }, [error, showToast]);
 
   return (
     <div>
@@ -105,8 +110,6 @@ export default function KanbanBoard({ project, user, onBack }) {
       </div>
 
       <div className="page-body">
-        {error && <Alert type="error">{error}</Alert>}
-
         {loading ? (
           <Spinner />
         ) : (
@@ -175,6 +178,8 @@ export default function KanbanBoard({ project, user, onBack }) {
           onClose={() => setMembersOpen(false)}
         />
       )}
+
+      <Toast message={toast.message} type={toast.type} onClose={hideToast} />
     </div>
   );
 }
