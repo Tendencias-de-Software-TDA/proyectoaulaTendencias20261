@@ -7,8 +7,9 @@ import {
 } from "../../api/api";
 import Spinner from "../common/Spinner";
 import Alert from "../common/Alert";
+import useEscKey from "../../hooks/useEscKey";
 
-export default function ProjectsPage({ user, onSelectProject }) {
+export default function ProjectsPage({ onSelectProject }) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
@@ -16,6 +17,8 @@ export default function ProjectsPage({ user, onSelectProject }) {
   const [form, setForm] = useState({ name: "", description: "", status: "active", start_date: "", due_date: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  useEscKey(() => { setModal(null); setDeleteConfirm(null); });
 
   const load = async () => {
     setLoading(true);

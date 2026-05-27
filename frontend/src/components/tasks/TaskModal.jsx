@@ -4,6 +4,7 @@ import Alert from "../common/Alert";
 import { PRIORITY_MAP, STATUS_COLS } from "../../constants/taskConstants";
 import CommentsSection from "./CommentsSection";
 import TaskHistory from "./TaskHistory";
+import useEscKey from "../../hooks/useEscKey";
 
 export default function TaskModal({
   taskModal,
@@ -30,7 +31,7 @@ export default function TaskModal({
   onDeleteComment,
 }) {
   const isEditing = Boolean(taskModal.task);
-
+  useEscKey(onClose);
   return (
     <div
       className="overlay"

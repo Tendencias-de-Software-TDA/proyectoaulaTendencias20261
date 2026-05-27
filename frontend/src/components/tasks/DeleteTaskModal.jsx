@@ -1,4 +1,8 @@
+import useEscKey from "../../hooks/useEscKey";
+
 export default function DeleteTaskModal({ task, onCancel, onConfirm }) {
+  useEscKey(onCancel);
+
   return (
     <div
       className="overlay"
