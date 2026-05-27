@@ -13,7 +13,7 @@ try:
     if not User.objects.filter(email='admin@admin.com').exists():
         User.objects.create_superuser(
             email='admin@admin.com',
-            password='admin',
+            password='admin.',
             username='admin',
             role='admin'
         )
