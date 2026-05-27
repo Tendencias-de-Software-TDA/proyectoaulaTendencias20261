@@ -18,8 +18,8 @@ export default function LoginPage({ onLogin }) {
       localStorage.setItem("refresh_token", data.refresh);
       const profile = await api.get("/users/profile/");
       onLogin(profile);
-    } catch (e) {
-      setError(e?.data?.detail || "Credenciales inválidas");
+    } catch (err) {
+      setError(err?.data?.detail || "Usuario o contraseña incorrectos");
     } finally {
       setLoading(false);
     }
