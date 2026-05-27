@@ -49,6 +49,16 @@ class TaskSerializer(serializers.ModelSerializer):
         required=False
     )
 
+class TaskSerializer(serializers.ModelSerializer):
+    project_info = ProjectSerializer(source='project', read_only=True)
+    assigned_to_info = UserSerializer(source='assigned_to', read_only=True)
+    tags = TagSlugRelatedField(
+        many=True,
+        slug_field='name',
+        queryset=Tag.objects.all(),
+        required=False
+    )
+
     class Meta:
         model = Task
         fields = [
@@ -60,20 +70,27 @@ class TaskSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         project = attrs.get('project')
-
         if project:
-            # Bloqueo por status archivado
             if project.status == 'archived':
                 raise serializers.ValidationError(
                     {"project": "Prohibido: No se pueden agregar tareas a un proyecto archivado."}
                 )
-            # Bloqueo por fecha vencida (aunque el status siga active)
             if project.due_date and project.due_date < timezone.now():
                 raise serializers.ValidationError(
                     {"project": "Prohibido: No se pueden agregar tareas a un proyecto vencido."}
                 )
-
         return attrs
+
+    def update(self, instance, validated_data):
+        changed_by = getattr(instance, '_changed_by', None)
+        tags = validated_data.pop('tags', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance._changed_by = changed_by
+        instance.save()
+        if tags is not None:
+            instance.tags.set(tags)
+        return instance
 
 
 class CommentSerializer(serializers.ModelSerializer):
