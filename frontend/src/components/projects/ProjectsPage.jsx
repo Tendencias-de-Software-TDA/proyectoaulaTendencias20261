@@ -13,7 +13,7 @@ export default function ProjectsPage({ user, onSelectProject }) {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [form, setForm] = useState({ name: "", description: "", status: "active" });
+  const [form, setForm] = useState({ name: "", description: "", status: "active", start_date: "", due_date: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -31,13 +31,19 @@ export default function ProjectsPage({ user, onSelectProject }) {
   useEffect(() => { load(); }, []);
 
   const openNew = () => {
-    setForm({ name: "", description: "", status: "active" });
+    setForm({ name: "", description: "", status: "active", start_date: "", due_date: "" });
     setError("");
     setModal("new");
   };
 
   const openEdit = (project) => {
-    setForm({ name: project.name, description: project.description || "", status: project.status });
+    setForm({
+      name: project.name,
+      description: project.description || "",
+      status: project.status,
+      start_date: project.start_date ? project.start_date.slice(0, 10) : "",
+      due_date: project.due_date ? project.due_date.slice(0, 10) : "",
+    });
     setError("");
     setModal(project);
   };
@@ -47,16 +53,25 @@ export default function ProjectsPage({ user, onSelectProject }) {
     setSaving(true);
     setError("");
     try {
+      const payload = { ...form };
+      if (!payload.start_date) delete payload.start_date;
+      if (!payload.due_date) delete payload.due_date;
       if (modal === "new") {
-        const created = await createProject(form);
+        const created = await createProject(payload);
         setProjects(p => [created, ...p]);
       } else {
-        const updated = await updateProject(modal.id, form);
+        const updated = await updateProject(modal.id, payload);
         setProjects(p => p.map(x => x.id === modal.id ? updated : x));
       }
       setModal(null);
     } catch (e) {
-      setError(e?.data?.name?.[0] || e?.data?.detail || "Error al guardar el proyecto");
+      setError(
+        e?.data?.due_date?.[0] ||
+        e?.data?.start_date?.[0] ||
+        e?.data?.name?.[0] ||
+        e?.data?.detail ||
+        "Error al guardar el proyecto"
+      );
     }
     setSaving(false);
   };
@@ -74,6 +89,8 @@ export default function ProjectsPage({ user, onSelectProject }) {
 
   const STATUS_LABEL = { active: "Activo", archived: "Archivado", inactive: "Inactivo" };
   const STATUS_COLOR = { active: "#22c55e", archived: "#f59e0b", inactive: "#6b7280" };
+
+  const formatDate = (d) => d ? new Date(d + "T00:00:00").toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" }) : null;
 
   return (
     <div>
@@ -105,10 +122,15 @@ export default function ProjectsPage({ user, onSelectProject }) {
                   >
                     {STATUS_LABEL[p.status] || p.status}
                   </span>
+                  {(p.start_date || p.due_date) && (
+                    <span style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px", display: "block" }}>
+                      📅 {formatDate(p.start_date) || "—"} → {formatDate(p.due_date) || "Sin límite"}
+                    </span>
+                  )}
                 </div>
                 <div style={{ display: "flex", gap: "8px", marginTop: "14px" }}>
                   <button className="btn btn-primary btn-sm" onClick={() => onSelectProject(p)}>Abrir</button>
-                  <button className="btn btn-ghost btn-sm" onClick={() => openEdit(p)}>Editor</button>
+                  <button className="btn btn-ghost btn-sm" onClick={() => openEdit(p)}>Editar</button>
                   <button className="btn btn-danger btn-sm" onClick={() => setDeleteConfirm(p)}>Eliminar</button>
                 </div>
               </div>
@@ -152,6 +174,26 @@ export default function ProjectsPage({ user, onSelectProject }) {
                   <option value="archived">Archivado</option>
                   <option value="inactive">Inactivo</option>
                 </select>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div className="field">
+                  <label className="label">Fecha de inicio</label>
+                  <input
+                    className="input"
+                    type="date"
+                    value={form.start_date}
+                    onChange={e => setForm({ ...form, start_date: e.target.value })}
+                  />
+                </div>
+                <div className="field">
+                  <label className="label">Fecha límite</label>
+                  <input
+                    className="input"
+                    type="date"
+                    value={form.due_date}
+                    onChange={e => setForm({ ...form, due_date: e.target.value })}
+                  />
+                </div>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-ghost" onClick={() => setModal(null)}>Cancelar</button>
