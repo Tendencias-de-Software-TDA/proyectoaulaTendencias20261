@@ -18,11 +18,8 @@ let failedQueue = [];
 
 const processQueue = (error, token = null) => {
   failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error);
-    } else {
-      prom.resolve(token);
-    }
+    if (error) prom.reject(error);
+    else prom.resolve(token);
   });
   failedQueue = [];
 };
@@ -38,10 +35,11 @@ api.interceptors.response.use(
       status === 401 &&
       !originalRequest._retry &&
       refreshToken &&
-      !originalRequest.url.includes("/token/")
+      !originalRequest.url.includes("/token/") &&
+      !originalRequest.url.includes("/users/logout/") &&
+      !originalRequest.url.includes("/users/login/")
     ) {
       if (isRefreshing) {
-        
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
@@ -69,7 +67,6 @@ api.interceptors.response.use(
         processQueue(null, newAccessToken);
         return api(originalRequest);
       } catch (refreshError) {
-
         processQueue(refreshError, null);
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
@@ -110,6 +107,16 @@ export const deleteComment = (commentId) => api.delete(`/comments/${commentId}/`
 
 // Historial
 export const getTaskHistory = (taskId) => api.get(`/history/?task=${taskId}`);
+
+// Etiquetas
+export const getTags = () => api.get("/tags/");
+export const createTag = (data) => api.post("/tags/", data);
+
+// Membresías
+export const getMembers = (projectId) => api.get(`/memberships/?project=${projectId}`);
+export const addMember = (data) => api.post("/memberships/", data);
+export const updateMember = (membershipId, data) => api.patch(`/memberships/${membershipId}/`, data);
+export const removeMember = (membershipId) => api.delete(`/memberships/${membershipId}/`);
 
 // Admin
 export const createUser = (data) => api.post("/users/", data);
