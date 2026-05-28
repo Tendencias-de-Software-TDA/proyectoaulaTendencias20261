@@ -101,6 +101,7 @@ export default function KanbanBoard({ project, user, onBack }) {
             </button>
           )}
         </div>
+
         {metricsOpen && (
           <ProjectMetrics
             projectId={project.id}
@@ -174,7 +175,8 @@ export default function KanbanBoard({ project, user, onBack }) {
 
       {membersOpen && (
         <MembersModal
-          users={users}
+          project={project}
+          user={user}
           onClose={() => setMembersOpen(false)}
         />
       )}
