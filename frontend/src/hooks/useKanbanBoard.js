@@ -8,9 +8,8 @@ import {
   getUsers,
 } from "../api/api";
 import useTaskComments from "./useTaskComments";
-import useToast from "./useToast";
 
-export default function useKanbanBoard(project, user) {
+export default function useKanbanBoard(project, user, showToast) {
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,8 +20,6 @@ export default function useKanbanBoard(project, user) {
   const [form, setForm] = useState({});
   const [error, setError] = useState("");
   const [formError, setFormError] = useState("");
-
-  const { showToast } = useToast();
 
   const {
     comments,
@@ -169,7 +166,7 @@ export default function useKanbanBoard(project, user) {
       }
 
       closeTaskModal();
-      showToast(
+      showToast?.(
         taskModal.task ? "Tarea actualizada correctamente." : "Tarea creada correctamente.",
         "success"
       );
@@ -190,7 +187,7 @@ export default function useKanbanBoard(project, user) {
       await deleteTaskRequest(id);
       setTasks((currentTasks) => currentTasks.filter((task) => task.id !== id));
       setDeleteConfirm(null);
-      showToast("Tarea eliminada.", "success");
+      showToast?.("Tarea eliminada.", "success");
     } catch (e) {
       setError(e?.data?.detail || "Error al eliminar la tarea");
       setDeleteConfirm(null);

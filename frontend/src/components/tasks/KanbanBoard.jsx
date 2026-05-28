@@ -51,7 +51,7 @@ export default function KanbanBoard({ project, user, onBack }) {
     handleAddComment,
     handleUpdateComment,
     handleDeleteComment,
-  } = useKanbanBoard(project, user);
+  } = useKanbanBoard(project, user, showToast);
 
   useEffect(() => {
     if (error) showToast(error, "error");
@@ -91,7 +91,7 @@ export default function KanbanBoard({ project, user, onBack }) {
             Miembros
           </button>
 
-          {user?.role !== "observer" && (
+          {user?.role !== "observer" && project.status !== "archived" && (
             <button
               type="button"
               className="btn btn-primary"
