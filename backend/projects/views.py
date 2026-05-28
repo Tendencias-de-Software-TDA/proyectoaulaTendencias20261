@@ -143,12 +143,20 @@ class ProjectMembershipViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        project_id = self.request.query_params.get('project')
+
         if user.is_admin:
-            return ProjectMembership.objects.all()
-        member_projects = ProjectMembership.objects.filter(
-            user=user
-        ).values_list('project_id', flat=True)
-        return ProjectMembership.objects.filter(project_id__in=member_projects)
+            qs = ProjectMembership.objects.all()
+        else:
+            member_projects = ProjectMembership.objects.filter(
+                user=user
+            ).values_list('project_id', flat=True)
+            qs = ProjectMembership.objects.filter(project_id__in=member_projects)
+
+        if project_id:
+            qs = qs.filter(project_id=project_id)
+
+        return qs
 
     def perform_create(self, serializer):
         project = serializer.validated_data.get('project')

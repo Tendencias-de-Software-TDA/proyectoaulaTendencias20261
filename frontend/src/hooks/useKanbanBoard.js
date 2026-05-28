@@ -4,8 +4,7 @@ import {
   createTask,
   updateTask,
   deleteTask as deleteTaskRequest,
-  getUserProfile,
-  getUsers,
+  getMembers,
 } from "../api/api";
 import useTaskComments from "./useTaskComments";
 
@@ -47,9 +46,9 @@ export default function useKanbanBoard(project, user, showToast) {
       setError("");
 
       try {
-        const [tasksResponse, usersResponse] = await Promise.allSettled([
+        const [tasksResponse, membersResponse] = await Promise.allSettled([
           getTasks(project.id),
-          user?.is_admin ? getUsers() : getUserProfile(),
+          getMembers(project.id),
         ]);
 
         if (cancelled) return;
@@ -61,16 +60,19 @@ export default function useKanbanBoard(project, user, showToast) {
               : tasksResponse.value?.results ?? []
             : [];
 
-        const loadedUsers =
-          usersResponse.status === "fulfilled"
-            ? Array.isArray(usersResponse.value)
-              ? usersResponse.value
-              : usersResponse.value?.results
-                ? usersResponse.value.results
-                : usersResponse.value?.id
-                  ? [usersResponse.value]
-                  : []
+        // Membresías → [{ id, user (UUID), username, role, ... }]
+        // Mapeamos a [{ id: UUID, username: string }] para el selector
+        const rawMembers =
+          membersResponse.status === "fulfilled"
+            ? Array.isArray(membersResponse.value)
+              ? membersResponse.value
+              : membersResponse.value?.results ?? []
             : [];
+
+        const loadedUsers = rawMembers.map((m) => ({
+          id: m.user,
+          username: m.username,
+        }));
 
         setTasks(loadedTasks);
         setUsers(loadedUsers);
@@ -87,7 +89,7 @@ export default function useKanbanBoard(project, user, showToast) {
 
     fetchData();
     return () => { cancelled = true; };
-  }, [project.id, user?.is_admin]);
+  }, [project.id]);
 
   const buildForm = (task, defaultStatus) => {
     if (task) {
@@ -210,11 +212,21 @@ export default function useKanbanBoard(project, user, showToast) {
   };
 
   const getUserName = (id) => {
-    return users.find((projectUser) => projectUser.id === id)?.username || "";
+    return users.find((u) => u.id === id)?.username || "";
   };
 
   const addCommentToCurrentTask = () => {
     handleAddComment(taskModal?.task?.id);
+  };
+
+  const refreshMembers = async () => {
+    try {
+      const mems = await getMembers(project.id);
+      const raw = Array.isArray(mems) ? mems : mems?.results ?? [];
+      setUsers(raw.map((m) => ({ id: m.user, username: m.username })));
+    } catch {
+      setError("No se pudo actualizar la lista de miembros. Recarga la página.");
+    }
   };
 
   return {
@@ -237,6 +249,7 @@ export default function useKanbanBoard(project, user, showToast) {
     deleteTask,
     moveTask,
     getUserName,
+    refreshMembers,
     comments,
     commentsLoading,
     newComment,

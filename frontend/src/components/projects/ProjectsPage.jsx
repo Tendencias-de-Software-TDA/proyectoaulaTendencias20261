@@ -4,13 +4,15 @@ import {
   createProject,
   updateProject,
   deleteProject as deleteProjectRequest,
+  getUsers,
+  addMember,
 } from "../../api/api";
 import Spinner from "../common/Spinner";
 import Alert from "../common/Alert";
 import useEscKey from "../../hooks/useEscKey";
 import useToast from "../../hooks/useToast";
 
-export default function ProjectsPage({ onSelectProject }) {
+export default function ProjectsPage({ onSelectProject, user }) {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
@@ -20,9 +22,19 @@ export default function ProjectsPage({ onSelectProject }) {
   const [error, setError] = useState("");
   const [formError, setFormError] = useState("");
 
+  const [membersStep, setMembersStep] = useState(null);
+  const [allUsers, setAllUsers] = useState([]);
+  const [selectedMembers, setSelectedMembers] = useState([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [membersError, setMembersError] = useState("");
+  const [addingMembers, setAddingMembers] = useState(false);
+
   const { showToast } = useToast();
 
-  useEscKey(() => { setModal(null); setDeleteConfirm(null); });
+  useEscKey(() => {
+    if (membersStep) { setMembersStep(null); setSelectedMembers([]); }
+    else { setModal(null); setDeleteConfirm(null); }
+  });
 
   const load = async () => {
     setLoading(true);
@@ -75,16 +87,21 @@ export default function ProjectsPage({ onSelectProject }) {
       const payload = { ...form };
       if (!payload.start_date) delete payload.start_date;
       if (!payload.due_date) delete payload.due_date;
+
       if (modal === "new") {
         const created = await createProject(payload);
         setProjects(p => [created, ...p]);
         showToast("Proyecto creado correctamente.", "success");
+        setModal(null);
+        if (user?.is_admin) {
+          openMembersStep(created.id, created.name);
+        }
       } else {
         const updated = await updateProject(modal.id, payload);
         setProjects(p => p.map(x => x.id === modal.id ? updated : x));
         showToast("Proyecto actualizado correctamente.", "success");
+        setModal(null);
       }
-      setModal(null);
     } catch (e) {
       setFormError(
         e?.data?.due_date?.[0] ||
@@ -95,6 +112,67 @@ export default function ProjectsPage({ onSelectProject }) {
       );
     }
     setSaving(false);
+  };
+
+  const openMembersStep = async (projectId, projectName) => {
+    setMembersStep({ projectId, projectName });
+    setSelectedMembers([]);
+    setMembersError("");
+    setMembersLoading(true);
+    try {
+      const data = await getUsers();
+      const users = Array.isArray(data) ? data : (data?.results ?? []);
+      setAllUsers(users.filter(u => u.id !== user?.id));
+    } catch {
+      setMembersError("No se pudo cargar la lista de usuarios.");
+    }
+    setMembersLoading(false);
+  };
+
+  const toggleMember = (userId) => {
+    setSelectedMembers(prev => {
+      const exists = prev.find(m => m.userId === userId);
+      if (exists) return prev.filter(m => m.userId !== userId);
+      return [...prev, { userId, role: "editor" }];
+    });
+  };
+
+  const setMemberRole = (userId, role) => {
+    setSelectedMembers(prev =>
+      prev.map(m => m.userId === userId ? { ...m, role } : m)
+    );
+  };
+
+  const saveMembersStep = async () => {
+    if (selectedMembers.length === 0) {
+      setMembersStep(null);
+      setSelectedMembers([]);
+      return;
+    }
+
+    setAddingMembers(true);
+    setMembersError("");
+    try {
+      await Promise.all(
+        selectedMembers.map(m =>
+          addMember({
+            project: membersStep.projectId,
+            user: m.userId,
+            role: m.role,
+          })
+        )
+      );
+      showToast(`${selectedMembers.length} miembro(s) agregado(s) al proyecto.`, "success");
+      setMembersStep(null);
+      setSelectedMembers([]);
+    } catch (e) {
+      setMembersError(
+        e?.data?.detail ||
+        e?.data?.non_field_errors?.[0] ||
+        "Error al agregar algunos miembros."
+      );
+    }
+    setAddingMembers(false);
   };
 
   const deleteProject = async (id) => {
@@ -111,8 +189,15 @@ export default function ProjectsPage({ onSelectProject }) {
 
   const STATUS_LABEL = { active: "Activo", archived: "Archivado", inactive: "Inactivo" };
   const STATUS_COLOR = { active: "#22c55e", archived: "#f59e0b", inactive: "#6b7280" };
+  const ROLE_LABEL = { editor: "Editor", observer: "Observador", owner: "Propietario" };
 
-  const formatDate = (d) => d ? new Date(d + "T00:00:00").toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" }) : null;
+  // ← CAMBIO: maneja tanto "2025-06-01" como "2025-06-01T00:00:00Z"
+  const formatDate = (d) => {
+    if (!d) return null;
+    const date = new Date(d.includes("T") ? d : d + "T00:00:00");
+    if (isNaN(date)) return null;
+    return date.toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
+  };
 
   return (
     <div>
@@ -134,7 +219,9 @@ export default function ProjectsPage({ onSelectProject }) {
         ) : (
           <div className="projects-grid">
             {projects.map(p => {
-              const isOverdue = p.due_date && p.status === "active" && new Date(p.due_date + "T23:59:59") < new Date();
+              // ← CAMBIO: maneja tanto "2025-06-01" como "2025-06-01T00:00:00Z"
+              const isOverdue = p.due_date && p.status === "active" &&
+                new Date(p.due_date.includes("T") ? p.due_date : p.due_date + "T23:59:59") < new Date();
               return (
                 <div key={p.id} className="card project-card">
                   <div className="project-name">{p.name}</div>
@@ -165,7 +252,6 @@ export default function ProjectsPage({ onSelectProject }) {
         )}
       </div>
 
-      {/* Modal crear / editar */}
       {modal && (
         <div className="overlay" onClick={e => e.target === e.currentTarget && setModal(null)}>
           <div className="modal">
@@ -224,7 +310,7 @@ export default function ProjectsPage({ onSelectProject }) {
               <div className="modal-footer">
                 <button type="button" className="btn btn-ghost" onClick={() => setModal(null)}>Cancelar</button>
                 <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? <Spinner /> : "Guardar"}
+                  {saving ? <Spinner /> : modal === "new" ? "Crear y agregar miembros →" : "Guardar"}
                 </button>
               </div>
             </form>
@@ -232,7 +318,101 @@ export default function ProjectsPage({ onSelectProject }) {
         </div>
       )}
 
-      {/* Modal confirmar eliminación */}
+      {membersStep && (
+        <div className="overlay" onClick={e => e.target === e.currentTarget && setMembersStep(null)}>
+          <div className="modal" style={{ maxWidth: "500px" }}>
+            <h2 className="modal-title">Agregar miembros</h2>
+            <p style={{ fontSize: "13px", color: "var(--muted)", marginBottom: "16px" }}>
+              Proyecto: <strong style={{ color: "var(--text)" }}>{membersStep.projectName}</strong>
+              <br />Selecciona los usuarios que tendrán acceso a este proyecto. Puedes saltarte este paso y agregar miembros después.
+            </p>
+
+            {membersError && <Alert type="error">{membersError}</Alert>}
+
+            {membersLoading ? (
+              <div style={{ textAlign: "center", padding: "24px" }}><Spinner /></div>
+            ) : allUsers.length === 0 ? (
+              <p style={{ fontSize: "13px", color: "var(--muted)", textAlign: "center", padding: "16px" }}>
+                No hay otros usuarios registrados en el sistema.
+              </p>
+            ) : (
+              <ul style={{ listStyle: "none", padding: 0, margin: "0 0 16px 0", display: "flex", flexDirection: "column", gap: "8px", maxHeight: "300px", overflowY: "auto" }}>
+                {allUsers.map(u => {
+                  const selected = selectedMembers.find(m => m.userId === u.id);
+                  return (
+                    <li
+                      key={u.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                        padding: "8px 10px",
+                        borderRadius: "8px",
+                        background: selected ? "var(--surface-2, #f0f9ff)" : "var(--surface)",
+                        border: `1px solid ${selected ? "var(--primary, #01696f)" : "var(--border)"}`,
+                        cursor: "pointer",
+                        transition: "all 0.15s",
+                      }}
+                      onClick={() => toggleMember(u.id)}
+                    >
+                      <div className="avatar" style={{ flexShrink: 0 }}>
+                        {u.username?.[0]?.toUpperCase()}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 500, fontSize: "14px" }}>{u.username}</div>
+                        <div style={{ fontSize: "12px", color: "var(--muted)" }}>{u.email}</div>
+                      </div>
+                      {selected && (
+                        <select
+                          className="select"
+                          style={{ width: "auto", fontSize: "12px", padding: "4px 8px" }}
+                          value={selected.role}
+                          onChange={e => { e.stopPropagation(); setMemberRole(u.id, e.target.value); }}
+                          onClick={e => e.stopPropagation()}
+                        >
+                          <option value="editor">Editor</option>
+                          <option value="observer">Observador</option>
+                          <option value="owner">Propietario</option>
+                        </select>
+                      )}
+                      <input
+                        type="checkbox"
+                        readOnly
+                        checked={!!selected}
+                        style={{ width: "16px", height: "16px", flexShrink: 0, accentColor: "var(--primary, #01696f)" }}
+                      />
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+
+            <div className="modal-footer">
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => { setMembersStep(null); setSelectedMembers([]); }}
+              >
+                Omitir
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={saveMembersStep}
+                disabled={addingMembers}
+              >
+                {addingMembers
+                  ? <Spinner />
+                  : selectedMembers.length > 0
+                    ? `Agregar ${selectedMembers.length} miembro(s)`
+                    : "Finalizar"
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {deleteConfirm && (
         <div className="overlay" onClick={e => e.target === e.currentTarget && setDeleteConfirm(null)}>
           <div className="modal" style={{ maxWidth: "400px" }}>

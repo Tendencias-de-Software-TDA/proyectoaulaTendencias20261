@@ -26,18 +26,16 @@ export default function KanbanBoard({ project, user, onBack }) {
     form,
     error,
     formError,
-
     setForm,
     setMembersOpen,
     setDeleteConfirm,
-
     openTaskModal,
     closeTaskModal,
     saveTask,
     deleteTask,
     moveTask,
     getUserName,
-
+    refreshMembers,
     comments,
     commentsLoading,
     newComment,
@@ -177,7 +175,10 @@ export default function KanbanBoard({ project, user, onBack }) {
         <MembersModal
           project={project}
           user={user}
-          onClose={() => setMembersOpen(false)}
+          onClose={() => {
+            setMembersOpen(false);
+            refreshMembers();
+          }}
         />
       )}
 
