@@ -8,6 +8,7 @@ import {
 import Spinner from "../common/Spinner";
 import Alert from "../common/Alert";
 import useEscKey from "../../hooks/useEscKey";
+import useToast from "../../hooks/useToast";
 
 export default function ProjectsPage({ onSelectProject }) {
   const [projects, setProjects] = useState([]);
@@ -17,6 +18,9 @@ export default function ProjectsPage({ onSelectProject }) {
   const [form, setForm] = useState({ name: "", description: "", status: "active", start_date: "", due_date: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [formError, setFormError] = useState("");
+
+  const { showToast } = useToast();
 
   useEscKey(() => { setModal(null); setDeleteConfirm(null); });
 
@@ -36,6 +40,7 @@ export default function ProjectsPage({ onSelectProject }) {
   const openNew = () => {
     setForm({ name: "", description: "", status: "active", start_date: "", due_date: "" });
     setError("");
+    setFormError("");
     setModal("new");
   };
 
@@ -48,13 +53,24 @@ export default function ProjectsPage({ onSelectProject }) {
       due_date: project.due_date ? project.due_date.slice(0, 10) : "",
     });
     setError("");
+    setFormError("");
     setModal(project);
   };
 
   const saveProject = async (e) => {
     e.preventDefault();
+    setFormError("");
+
+    if (!form.name?.trim()) {
+      setFormError("El nombre del proyecto es obligatorio.");
+      return;
+    }
+    if (form.start_date && form.due_date && form.start_date > form.due_date) {
+      setFormError("La fecha de inicio no puede ser posterior a la fecha límite.");
+      return;
+    }
+
     setSaving(true);
-    setError("");
     try {
       const payload = { ...form };
       if (!payload.start_date) delete payload.start_date;
@@ -62,13 +78,15 @@ export default function ProjectsPage({ onSelectProject }) {
       if (modal === "new") {
         const created = await createProject(payload);
         setProjects(p => [created, ...p]);
+        showToast("Proyecto creado correctamente.", "success");
       } else {
         const updated = await updateProject(modal.id, payload);
         setProjects(p => p.map(x => x.id === modal.id ? updated : x));
+        showToast("Proyecto actualizado correctamente.", "success");
       }
       setModal(null);
     } catch (e) {
-      setError(
+      setFormError(
         e?.data?.due_date?.[0] ||
         e?.data?.start_date?.[0] ||
         e?.data?.name?.[0] ||
@@ -84,6 +102,7 @@ export default function ProjectsPage({ onSelectProject }) {
       await deleteProjectRequest(id);
       setProjects(p => p.filter(x => x.id !== id));
       setDeleteConfirm(null);
+      showToast("Proyecto eliminado.", "success");
     } catch (e) {
       setError(e?.data?.detail || "Error al eliminar el proyecto");
       setDeleteConfirm(null);
@@ -114,30 +133,34 @@ export default function ProjectsPage({ onSelectProject }) {
           </div>
         ) : (
           <div className="projects-grid">
-            {projects.map(p => (
-              <div key={p.id} className="card project-card">
-                <div className="project-name">{p.name}</div>
-                <p className="project-desc">{p.description || "Sin descripción"}</p>
-                <div className="project-meta">
-                  <span
-                    className="badge"
-                    style={{ color: STATUS_COLOR[p.status], background: `${STATUS_COLOR[p.status]}22` }}
-                  >
-                    {STATUS_LABEL[p.status] || p.status}
-                  </span>
-                  {(p.start_date || p.due_date) && (
-                    <span style={{ fontSize: "12px", color: "var(--muted)", marginTop: "4px", display: "block" }}>
-                      📅 {formatDate(p.start_date) || "—"} → {formatDate(p.due_date) || "Sin límite"}
+            {projects.map(p => {
+              const isOverdue = p.due_date && p.status === "active" && new Date(p.due_date + "T23:59:59") < new Date();
+              return (
+                <div key={p.id} className="card project-card">
+                  <div className="project-name">{p.name}</div>
+                  <p className="project-desc">{p.description || "Sin descripción"}</p>
+                  <div className="project-meta">
+                    <span
+                      className="badge"
+                      style={{ color: STATUS_COLOR[p.status], background: `${STATUS_COLOR[p.status]}22` }}
+                    >
+                      {STATUS_LABEL[p.status] || p.status}
                     </span>
-                  )}
+                    {(p.start_date || p.due_date) && (
+                      <span style={{ fontSize: "12px", color: isOverdue ? "#ef4444" : "var(--muted)", marginTop: "4px", display: "block" }}>
+                        {isOverdue ? "⚠️" : "📅"} {formatDate(p.start_date) || "—"} → {formatDate(p.due_date) || "Sin límite"}
+                        {isOverdue && <span style={{ marginLeft: "4px", fontWeight: 600 }}>· Vencido</span>}
+                      </span>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", gap: "8px", marginTop: "14px" }}>
+                    <button className="btn btn-primary btn-sm" onClick={() => onSelectProject(p)}>Abrir</button>
+                    <button className="btn btn-ghost btn-sm" onClick={() => openEdit(p)}>Editar</button>
+                    <button className="btn btn-danger btn-sm" onClick={() => setDeleteConfirm(p)}>Eliminar</button>
+                  </div>
                 </div>
-                <div style={{ display: "flex", gap: "8px", marginTop: "14px" }}>
-                  <button className="btn btn-primary btn-sm" onClick={() => onSelectProject(p)}>Abrir</button>
-                  <button className="btn btn-ghost btn-sm" onClick={() => openEdit(p)}>Editar</button>
-                  <button className="btn btn-danger btn-sm" onClick={() => setDeleteConfirm(p)}>Eliminar</button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -147,7 +170,7 @@ export default function ProjectsPage({ onSelectProject }) {
         <div className="overlay" onClick={e => e.target === e.currentTarget && setModal(null)}>
           <div className="modal">
             <h2 className="modal-title">{modal === "new" ? "Nuevo proyecto" : "Editar proyecto"}</h2>
-            {error && <Alert>{error}</Alert>}
+            {formError && <Alert>{formError}</Alert>}
             <form onSubmit={saveProject}>
               <div className="field">
                 <label className="label">Nombre</label>
