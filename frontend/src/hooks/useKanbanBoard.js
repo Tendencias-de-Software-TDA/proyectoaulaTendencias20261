@@ -8,21 +8,21 @@ import {
   getUsers,
 } from "../api/api";
 import useTaskComments from "./useTaskComments";
+import useToast from "./useToast";
 
 export default function useKanbanBoard(project, user) {
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
-
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-
   const [taskModal, setTaskModal] = useState(null);
   const [membersOpen, setMembersOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
-
   const [form, setForm] = useState({});
   const [error, setError] = useState("");
   const [formError, setFormError] = useState("");
+
+  const { showToast } = useToast();
 
   const {
     comments,
@@ -89,10 +89,7 @@ export default function useKanbanBoard(project, user) {
     };
 
     fetchData();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [project.id, user?.is_admin]);
 
   const buildForm = (task, defaultStatus) => {
@@ -107,7 +104,6 @@ export default function useKanbanBoard(project, user) {
         tags: task.tags || [],
       };
     }
-
     return {
       title: "",
       description: "",
@@ -124,10 +120,7 @@ export default function useKanbanBoard(project, user) {
     setFormError("");
     setTaskModal({ task, defaultStatus });
     resetCommentState();
-
-    if (task) {
-      loadComments(task.id);
-    }
+    if (task) loadComments(task.id);
   };
 
   const closeTaskModal = () => {
@@ -141,13 +134,11 @@ export default function useKanbanBoard(project, user) {
 
     if (!form.title?.trim()) {
       setFormError("El título es obligatorio.");
-      setSaving(false);
       return;
     }
 
     if (form.title.trim().length > 200) {
       setFormError("El título no puede superar los 200 caracteres.");
-      setSaving(false);
       return;
     }
 
@@ -167,7 +158,6 @@ export default function useKanbanBoard(project, user) {
     try {
       if (taskModal.task) {
         const updatedTask = await updateTask(taskModal.task.id, payload);
-
         setTasks((currentTasks) =>
           currentTasks.map((task) =>
             task.id === updatedTask.id ? updatedTask : task
@@ -175,11 +165,14 @@ export default function useKanbanBoard(project, user) {
         );
       } else {
         const createdTask = await createTask(payload);
-
         setTasks((currentTasks) => [...currentTasks, createdTask]);
       }
 
       closeTaskModal();
+      showToast(
+        taskModal.task ? "Tarea actualizada correctamente." : "Tarea creada correctamente.",
+        "success"
+      );
     } catch (e) {
       setFormError(
         e?.data?.detail ||
@@ -195,12 +188,9 @@ export default function useKanbanBoard(project, user) {
   const deleteTask = async (id) => {
     try {
       await deleteTaskRequest(id);
-
-      setTasks((currentTasks) =>
-        currentTasks.filter((task) => task.id !== id)
-      );
-
+      setTasks((currentTasks) => currentTasks.filter((task) => task.id !== id));
       setDeleteConfirm(null);
+      showToast("Tarea eliminada.", "success");
     } catch (e) {
       setError(e?.data?.detail || "Error al eliminar la tarea");
       setDeleteConfirm(null);
@@ -210,7 +200,6 @@ export default function useKanbanBoard(project, user) {
   const moveTask = async (task, newStatus) => {
     try {
       await updateTask(task.id, { status: newStatus });
-
       setTasks((currentTasks) =>
         currentTasks.map((currentTask) =>
           currentTask.id === task.id
@@ -242,18 +231,15 @@ export default function useKanbanBoard(project, user) {
     form,
     error,
     formError,
-
     setForm,
     setMembersOpen,
     setDeleteConfirm,
-
     openTaskModal,
     closeTaskModal,
     saveTask,
     deleteTask,
     moveTask,
     getUserName,
-
     comments,
     commentsLoading,
     newComment,
