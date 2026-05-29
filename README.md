@@ -189,7 +189,7 @@ El frontend estará disponible en `http://localhost:5173/`
 
 | Usuario | Contraseña | Rol |
 |---|---|---|
-| `admin` | `admin` | Administrador (ve todos los proyectos y usuarios) |
+| `admin` | `admin.` | Administrador (ve todos los proyectos y usuarios) |
 | `jdavid` | `jdavid` | Member (ve solo sus proyectos) |
 
 ### En local (crear mediante `POST /api/users/`)
