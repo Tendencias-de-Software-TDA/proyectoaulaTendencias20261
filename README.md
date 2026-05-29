@@ -185,17 +185,28 @@ El frontend estará disponible en `http://localhost:5173/`
 
 ## Usuarios de Prueba
 
-Crear los siguientes usuarios mediante `POST /api/users/` (requiere autenticación de admin, o crear el primero directamente con `python manage.py createsuperuser`):
+### En producción (ya disponibles en https://proyectoaula-tendencias20261-aq3d.vercel.app)
 
-```json
-{
-  "username": "admin",
-  "email": "admin@test.com",
-  "password": "admin123",
-  "role": "admin"
-}
+| Usuario | Contraseña | Rol |
+|---|---|---|
+| `admin` | `admin` | Administrador (ve todos los proyectos y usuarios) |
+| `jdavid` | `jdavid` | Member (ve solo sus proyectos) |
+
+### En local (crear mediante `POST /api/users/`)
+
+Requiere autenticación de admin. El primer usuario admin se puede crear con:
+```bash
+python manage.py createsuperuser
 ```
 
+O directamente en el shell de Django:
+```bash
+python manage.py shell
+>>> from users.models import User
+>>> User.objects.create_user(username='admin', password='admin123', email='admin@test.com', role='admin')
+```
+
+Luego crear el member desde el frontend o Swagger:
 ```json
 {
   "username": "jdavid",
@@ -216,7 +227,7 @@ La API usa JWT (JSON Web Tokens). Los tokens se gestionan automáticamente en el
 POST /api/token/
 {
   "username": "admin",
-  "password": "admin123"
+  "password": "admin"
 }
 ```
 
