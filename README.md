@@ -107,17 +107,23 @@ Y para iniciar el FrontEnd se debe usar el comando:
 
 `npm run dev`
 
-Para acceder a la documentacion de la API visite el endopint *[http://127.0.0.1:8000/swagger/](http://127.0.0.1:8000/swagger/)*
+
+# Back-End
+
+La base de datos esta contruida sobre postgresql y está alojada en un servicio en la nube de *[railway.com](railway.com)*
+
+La API que provee los servicios para interactuar con la base de datos se encuentra alojada en nube en los servicios de *[vercel.com](vercel.com)*
+
+Para acceder a la documentacion de la API visite el endopint *[https://backend-proyecto-final-4rhzfczat-juan-david-tendencias-project.vercel.app/swagger](https://backend-proyecto-final-4rhzfczat-juan-david-tendencias-project.vercel.app/swagger)*
 cuando inicialice el servidor en la máquina local
 
 # Front-End
 
 Ha sido construido usando React + Vite
 
-por defecto la aplicacion queda alojada en el puerto: http://localhost:5173
+El front-end se encuentra alojado en los servicios de vercel en el link https://frontend-proyecto-final-five.vercel.app
 
->NOTA: en la vista del login, si aun no has creado un super usuario, haslo en la terminal con: python manage.py createsuperuser
->con ese usuario y contraseña te puedes logear
+>NOTA: puedes loguearte con el usuario: admin contraseña: admin
 
 ## Flujo funcional implementado
 

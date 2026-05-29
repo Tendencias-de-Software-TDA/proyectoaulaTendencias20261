@@ -1,13 +1,15 @@
 {
-  "builds": [{
-  "src":"Proyecto-ventas/ventas/wsgi.py",
-  "use": "@vercel/python",
-  "config": { "maxLambdaSize": "15mb", "runtime": "python3.14.3" }
-  }],
+  "builds": [
+    {
+      "src":"ventas/wsgi.py",
+      "use": "@vercel/python",
+      "config": { "maxLambdaSize": "15mb", "runtime": "python3.14.3" }
+    }
+  ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "Proyecto-ventas/ventas/wsgi.py"
+      "dest": "ventas/wsgi.py"
     }
   ]
 }
