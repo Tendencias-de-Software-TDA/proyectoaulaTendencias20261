@@ -1,7 +1,7 @@
 import axios from "axios";
 import { clearTokens, getAccessToken, getRefreshToken, saveTokens } from "./tokenStorage";
 
-const apiBaseUrl = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+const apiBaseUrl = import.meta.env.VITE_API_URL || "https://backend-proyecto-final-pi.vercel.app";
 
 const api = axios.create({
   baseURL: `${apiBaseUrl}/v1`,
