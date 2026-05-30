@@ -6,6 +6,7 @@ function ProductosPage() {
     <ResourceCrudPage
       service={productoApi}
       title="Productos"
+      subtitle="Gestiona tu inventario de productos. Agrega nuevos productos, actualiza precios y mantén el control de lo que tienes disponible."
       emptyTableMessage="No hay productos registrados."
     />
   );

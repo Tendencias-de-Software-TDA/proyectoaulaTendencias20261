@@ -51,6 +51,16 @@ function ResourceCrudPage({
 	/** Campos extra en formulario (p. ej. `items` en cotización: no siempre vienen en OPTIONS). */
 	extraFormFields = [],
 	hideCreateButton = false,
+	/** Sobrescribe campos visibles en el formulario de creación (si se provee). */
+	createFields,
+	/** Sobrescribe campos visibles en el formulario de edición (si se provee). */
+	editFields,
+	/** Hook opcional para crear (si necesitas endpoint custom). */
+	onCreate,
+	/** Hook opcional para actualizar (si necesitas validar/filtrar). */
+	onUpdate,
+	/** Render opcional de acciones extra por fila. */
+	extraRowActions,
 }) {
 	const [rows, setRows] = useState([]);
 	const [loading, setLoading] = useState(true);
@@ -97,16 +107,39 @@ function ResourceCrudPage({
 	const camposOcultosFormulario = ["factura_numero"];
 
 	const formFields = useMemo(
-		() =>
-			computeFormFields(
-				formMode,
-				rows,
-				optionsPayload,
-				editingRow,
-				service,
-				extraFormFields,
-			).filter((field) => !camposOcultosFormulario.includes(field)),
-		[formMode, rows, optionsPayload, editingRow, service, extraFormFields],
+		() => {
+			const forced =
+				formMode === "create"
+					? Array.isArray(createFields) && createFields.length
+						? createFields
+						: null
+					: Array.isArray(editFields) && editFields.length
+						? editFields
+						: null;
+
+			const base = forced
+				? [...forced]
+				: computeFormFields(
+						formMode,
+						rows,
+						optionsPayload,
+						editingRow,
+						service,
+						extraFormFields,
+					);
+
+			return base.filter((field) => !camposOcultosFormulario.includes(field));
+		},
+		[
+			formMode,
+			rows,
+			optionsPayload,
+			editingRow,
+			service,
+			extraFormFields,
+			createFields,
+			editFields,
+		],
 	);
 
 	/** POST + PATCH: los choice fields pueden declararse en cualquiera de las dos acciones. */
@@ -141,42 +174,50 @@ function ResourceCrudPage({
 		setErrorBanner("");
 		try {
 			if (formMode === "create") {
-				const postKeys = service.fieldNamesForAction(
-					optionsPayload,
-					"POST",
-				);
-				let body = { ...payload };
-				if (postKeys?.length) {
-					body = Object.fromEntries(
-						Object.entries(body).filter(([k]) =>
-							postKeys.includes(k),
-						),
+				if (typeof onCreate === "function") {
+					await onCreate(payload);
+				} else {
+					const postKeys = service.fieldNamesForAction(
+						optionsPayload,
+						"POST",
 					);
-				}
-				for (const k of extraFormFields) {
-					if (Object.prototype.hasOwnProperty.call(payload, k)) {
-						body[k] = payload[k];
+					let body = { ...payload };
+					if (postKeys?.length) {
+						body = Object.fromEntries(
+							Object.entries(body).filter(([k]) =>
+								postKeys.includes(k),
+							),
+						);
 					}
+					for (const k of extraFormFields) {
+						if (Object.prototype.hasOwnProperty.call(payload, k)) {
+							body[k] = payload[k];
+						}
+					}
+					await service.create(body);
 				}
-				await service.create(body);
 				setFeedback({
 					type: "success",
 					message: "Registro creado correctamente.",
 				});
 			} else if (editingRow?.id != null) {
-				let body = { ...payload };
-				delete body.id;
-				const patchKeys =
-					service.fieldNamesForAction(optionsPayload, "PATCH") ||
-					service.fieldNamesForAction(optionsPayload, "PUT");
-				if (patchKeys?.length) {
-					body = Object.fromEntries(
-						Object.entries(body).filter(([k]) =>
-							patchKeys.includes(k),
-						),
-					);
+				if (typeof onUpdate === "function") {
+					await onUpdate(editingRow.id, payload, editingRow);
+				} else {
+					let body = { ...payload };
+					delete body.id;
+					const patchKeys =
+						service.fieldNamesForAction(optionsPayload, "PATCH") ||
+						service.fieldNamesForAction(optionsPayload, "PUT");
+					if (patchKeys?.length) {
+						body = Object.fromEntries(
+							Object.entries(body).filter(([k]) =>
+								patchKeys.includes(k),
+							),
+						);
+					}
+					await service.update(editingRow.id, body);
 				}
-				await service.update(editingRow.id, body);
 				setFeedback({
 					type: "success",
 					message: "Registro actualizado.",
@@ -255,6 +296,7 @@ function ResourceCrudPage({
 						onEdit={openEdit}
 						onDelete={(row) => setDeleteRow(row)}
 						emptyMessage={emptyTableMessage}
+						extraActions={extraRowActions}
 					/>
 				)}
 			</div>
@@ -273,9 +315,8 @@ function ResourceCrudPage({
 			>
 				{formFields.length === 0 ? (
 					<p className="dynamic-form__empty">
-						No se pudieron inferir campos. Verifique permisos o cree
-						un registro desde el administrador de Django para
-						inicializar el esquema.
+						No hay campos disponibles para este formulario. Revise su
+						rol/permisos o intente nuevamente más tarde.
 					</p>
 				) : (
 					<DynamicForm

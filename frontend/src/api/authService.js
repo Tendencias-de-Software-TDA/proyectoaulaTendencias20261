@@ -8,7 +8,12 @@ export async function healthCheck() {
 
 export async function login(username, password) {
   const { data } = await api.post("/login/", { username, password });
-  saveTokens({ access: data.access, refresh: data.refresh });
+  saveTokens({
+    access: data.access,
+    refresh: data.refresh,
+    rol: data.rol,
+    username: data.username ?? username,
+  });
   return data;
 }
 

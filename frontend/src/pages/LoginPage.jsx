@@ -47,7 +47,11 @@ function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-card">
-        
+        <img
+          src={logo}
+          alt="Logo empresa"
+          className="login-card__brand-logo"
+        />
         <h1 className="login-card__title">Inicio de sesión</h1>
 
         <form className="login-form" onSubmit={handleSubmit} noValidate>
@@ -97,7 +101,7 @@ function LoginPage() {
             </p>
           )}
           <p className="login-card__hint">
-            Panel de ventas · acceso restringido
+            Gestión de inventario · acceso restringido
           </p>
         </div>
       </div>

@@ -45,6 +45,10 @@ describe("Flujo principal del logeo", () => {
 	});
 
 	it("Intentar iniciar sesion con credenciales invalidas", async () => {
+		vi.spyOn(authService, "login").mockRejectedValue({
+			message: "No active account found with the given credentials",
+		});
+
 		const username = screen.getByLabelText("Usuario");
 		const password = screen.getByLabelText("Contraseña");
 		const botonEntrar = component.getByText("Entrar");

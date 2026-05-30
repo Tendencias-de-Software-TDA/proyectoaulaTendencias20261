@@ -55,6 +55,9 @@ export function createCrudService(path) {
       if (data?.pago && typeof data.pago === "object") {
         return data.pago;
       }
+      if (data?.nota_credito && typeof data.nota_credito === "object") {
+        return data.nota_credito;
+      }
       return data;
     },
 
@@ -83,5 +86,21 @@ export const cotizacionApi = {
   },
 };
 
-export const facturaApi = createCrudService("/factura/");
+const facturaCrud = createCrudService("/factura/");
+
+/** CRUD + acción de conversión desde cotización (backend facturación). */
+export const facturaApi = {
+  ...facturaCrud,
+  async convertirDesdeCotizacion(cotizacion_id) {
+    const { data } = await api.post("/factura/convertir/", { cotizacion_id });
+    return data;
+  },
+
+  /** Anula la factura (obliga motivo; validación en servidor). */
+  async anular(id, motivo) {
+    const { data } = await api.post(`/factura/${id}/anular/`, { motivo });
+    return data;
+  },
+};
 export const pagoApi = createCrudService("/pago/");
+export const notaCreditoApi = createCrudService("/nota-credito/");

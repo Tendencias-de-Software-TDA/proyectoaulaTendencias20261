@@ -289,6 +289,9 @@ function CotizacionesPage() {
       <header className="page__header page__header--row">
         <div>
           <h1 className="page__title">Cotizaciones</h1>
+          <p className="page__subtitle">
+            Crea y administra cotizaciones para tus clientes. Define productos, cantidades y genera propuestas claras antes de facturar.
+          </p>
         </div>
         <Button type="button" onClick={openCreate}>
           Nueva cotización

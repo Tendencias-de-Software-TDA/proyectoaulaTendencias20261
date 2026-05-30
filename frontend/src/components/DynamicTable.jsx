@@ -1,6 +1,13 @@
 import { formatCellValue, inferColumnKeys } from "../utils/dynamicData.js";
 
-function DynamicTable({ rows, columnKeys, onEdit, onDelete, emptyMessage }) {
+function DynamicTable({
+  rows,
+  columnKeys,
+  onEdit,
+  onDelete,
+  emptyMessage,
+  extraActions,
+}) {
   if (!rows?.length) {
     return <p className="empty-state">{emptyMessage}</p>;
   }
@@ -27,6 +34,7 @@ function DynamicTable({ rows, columnKeys, onEdit, onDelete, emptyMessage }) {
               ))}
               <td className="data-table__actions-cell">
                 <div className="table-actions">
+                  {typeof extraActions === "function" ? extraActions(row) : null}
                   <button
                     type="button"
                     className="btn--link"

@@ -10,16 +10,21 @@ function Navbar({ onLogout }) {
   return (
     <header className="app-navbar">
       <div className="app-navbar__brand">
-      <img 
-       src={logo} 
-       className="app-navbar__logo" 
-      />
-        <span>Panel de ventas</span>
+        <div className="app-navbar__brand-center">
+          <img src={logo} alt="Logo empresa" className="app-navbar__logo" />
+          <div className="app-navbar__brand-text">
+            <span className="app-navbar__brand-title">Gestión de inventario</span>
+            <span className="app-navbar__brand-subtitle">J.X IMPORTACIONES</span>
+          </div>
+        </div>
       </div>
 
       <nav className="app-navbar__links" aria-label="Principal">
         <NavLink to="/" end className={navClass}>
-          Dashboard
+          Reporte financiero
+        </NavLink>
+        <NavLink to="/cartera" className={navClass}>
+          Cartera
         </NavLink>
         <NavLink to="/clientes" className={navClass}>
           Clientes
@@ -35,6 +40,9 @@ function Navbar({ onLogout }) {
         </NavLink>
         <NavLink to="/pagos" className={navClass}>
           Pagos
+        </NavLink>
+        <NavLink to="/notas-credito" className={navClass}>
+          Notas crédito
         </NavLink>
         <Button type="button" variant="ghost" size="sm" onClick={onLogout}>
           Cerrar sesión
