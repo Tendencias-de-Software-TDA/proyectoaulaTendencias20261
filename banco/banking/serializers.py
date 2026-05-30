@@ -4,7 +4,18 @@ from django.contrib.auth.models import Group, User
 from django.db import transaction
 from rest_framework import serializers
 
-from .models import Cliente, CuentaBancaria, Deposito, Transferencia
+from .models import Cliente, CuentaBancaria, Deposito, ProductoFinanciero, Transferencia
+from .validators import validar_cuenta_operable
+
+
+def _cuentas_activas_queryset(request):
+    qs = CuentaBancaria.objects.filter(estado=CuentaBancaria.Estado.ACTIVA)
+    user = getattr(request, 'user', None)
+    if user and user.is_authenticated and not (
+        user.is_staff or user.is_superuser
+    ):
+        qs = qs.filter(cliente__user=user)
+    return qs
 
 
 class ClienteListaSerializer(serializers.ModelSerializer):
@@ -96,11 +107,14 @@ class ClienteAutoedicionSerializer(serializers.ModelSerializer):
 
 
 class CuentaBancariaSerializer(serializers.ModelSerializer):
+    cliente_nombre = serializers.CharField(source='cliente.nombre_completo', read_only=True)
+
     class Meta:
         model = CuentaBancaria
         fields = (
             'id',
             'cliente',
+            'cliente_nombre',
             'tipo',
             'numero_cuenta',
             'saldo',
@@ -186,15 +200,18 @@ class DepositoSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('id', 'fecha', 'saldo_resultante', 'creado_en')
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request')
+        if request:
+            self.fields['cuenta'].queryset = _cuentas_activas_queryset(request)
+
     def validate(self, attrs):
         cuenta = attrs['cuenta']
         monto = attrs['monto']
         tipo = attrs.get('tipo_operacion', Deposito.TipoOperacion.DEPOSITO)
 
-        if cuenta.estado != CuentaBancaria.Estado.ACTIVA:
-            raise serializers.ValidationError(
-                {'cuenta': 'La cuenta no está activa.'}
-            )
+        validar_cuenta_operable(cuenta)
 
         if tipo == Deposito.TipoOperacion.RETIRO and cuenta.saldo < monto:
             raise serializers.ValidationError(
@@ -209,7 +226,7 @@ class DepositoSerializer(serializers.ModelSerializer):
         tipo = validated_data.get('tipo_operacion', Deposito.TipoOperacion.DEPOSITO)
 
         with transaction.atomic():
-            # Re-leer la cuenta con bloqueo para evitar condiciones de carrera
+            
             cuenta = CuentaBancaria.objects.select_for_update().get(pk=cuenta.pk)
 
             if tipo == Deposito.TipoOperacion.DEPOSITO:
@@ -255,14 +272,7 @@ class DepositoListaSerializer(serializers.ModelSerializer):
 
 
 class TransferenciaSerializer(serializers.Serializer):
-    """
-    Serializer para ejecutar una transferencia entre dos cuentas bancarias.
-
-    Implementa:
-    - Validación de saldo suficiente en cuenta origen
-    - Actualización atómica de ambas cuentas (con select_for_update ordenado por PK)
-    - Registro de movimientos (Deposito) en ambas cuentas al completarse la transferencia
-    """
+  
 
     cuenta_origen = serializers.PrimaryKeyRelatedField(
         queryset=CuentaBancaria.objects.all(),
@@ -285,6 +295,18 @@ class TransferenciaSerializer(serializers.Serializer):
         help_text='Concepto o descripción de la transferencia.',
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request')
+        if not request:
+            return
+        user = request.user
+        if user.is_authenticated and not (user.is_staff or user.is_superuser):
+            self.fields['cuenta_origen'].queryset = _cuentas_activas_queryset(request)
+            self.fields['cuenta_destino'].queryset = CuentaBancaria.objects.filter(
+                estado=CuentaBancaria.Estado.ACTIVA,
+            )
+
     def validate(self, attrs):
         origen = attrs['cuenta_origen']
         destino = attrs['cuenta_destino']
@@ -296,21 +318,24 @@ class TransferenciaSerializer(serializers.Serializer):
                 {'cuenta_destino': 'La cuenta destino debe ser diferente a la cuenta origen.'}
             )
 
-        # Ambas cuentas deben estar activas
-        if origen.estado != CuentaBancaria.Estado.ACTIVA:
-            raise serializers.ValidationError(
-                {'cuenta_origen': 'La cuenta origen no está activa.'}
-            )
-        if destino.estado != CuentaBancaria.Estado.ACTIVA:
-            raise serializers.ValidationError(
-                {'cuenta_destino': 'La cuenta destino no está activa.'}
-            )
+        # Ambas cuentas deben permitir operaciones
+        validar_cuenta_operable(origen, 'cuenta_origen')
+        validar_cuenta_operable(destino, 'cuenta_destino')
 
         # Validación preliminar de saldo (se re-valida dentro de la transacción atómica)
         if origen.saldo < monto:
             raise serializers.ValidationError(
                 {'monto': f'Fondos insuficientes en la cuenta origen. Saldo actual: {origen.saldo}'}
             )
+
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            user = request.user
+            if not (user.is_staff or user.is_superuser):
+                if origen.cliente.user_id != user.id:
+                    raise serializers.ValidationError(
+                        {'cuenta_origen': 'Solo puede transferir desde sus propias cuentas.'}
+                    )
 
         return attrs
 
@@ -321,7 +346,7 @@ class TransferenciaSerializer(serializers.Serializer):
         descripcion = validated_data.get('descripcion', '')
 
         with transaction.atomic():
-            # ── Bloqueo ordenado por PK para prevenir deadlocks ──
+            
             pks = sorted([cuenta_origen_obj.pk, cuenta_destino_obj.pk])
             cuentas_bloqueadas = {
                 c.pk: c
@@ -330,19 +355,19 @@ class TransferenciaSerializer(serializers.Serializer):
             origen = cuentas_bloqueadas[cuenta_origen_obj.pk]
             destino = cuentas_bloqueadas[cuenta_destino_obj.pk]
 
-            # ── Re-validación dentro del bloqueo (condición de carrera) ──
+            
             if origen.saldo < monto:
                 raise serializers.ValidationError(
                     {'monto': f'Fondos insuficientes. Saldo actual: {origen.saldo}'}
                 )
 
-            # ── Actualización atómica de saldos ──
+           
             origen.saldo -= monto
             destino.saldo += monto
             origen.save(update_fields=['saldo'])
             destino.save(update_fields=['saldo'])
 
-            # ── Registro de movimientos en ambas cuentas ──
+            
             concepto_origen = (
                 f'Transferencia enviada a cuenta {destino.numero_cuenta}'
             )
@@ -371,7 +396,7 @@ class TransferenciaSerializer(serializers.Serializer):
                 descripcion=concepto_destino,
             )
 
-            # ── Registro de la transferencia ──
+           
             transferencia = Transferencia.objects.create(
                 cuenta_origen=origen,
                 cuenta_destino=destino,
@@ -427,3 +452,82 @@ class TransferenciaListaSerializer(serializers.ModelSerializer):
             'movimiento_destino',
         )
         read_only_fields = fields
+
+
+class ExtractoQuerySerializer(serializers.Serializer):
+    fecha_desde = serializers.DateField()
+    fecha_hasta = serializers.DateField()
+
+    def validate(self, attrs):
+        if attrs['fecha_desde'] > attrs['fecha_hasta']:
+            raise serializers.ValidationError(
+                {'fecha_hasta': 'Debe ser posterior o igual a fecha_desde.'}
+            )
+        return attrs
+
+
+class ExtractoTransaccionSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    fecha = serializers.DateTimeField()
+    tipo_operacion = serializers.CharField()
+    tipo_operacion_display = serializers.CharField()
+    monto = serializers.DecimalField(max_digits=14, decimal_places=2)
+    descripcion = serializers.CharField()
+    saldo_resultante = serializers.DecimalField(max_digits=14, decimal_places=2)
+
+
+class ExtractoSerializer(serializers.Serializer):
+    cuenta_id = serializers.IntegerField()
+    numero_cuenta = serializers.CharField()
+    tipo_cuenta = serializers.CharField()
+    fecha_desde = serializers.DateField()
+    fecha_hasta = serializers.DateField()
+    saldo_inicial = serializers.DecimalField(max_digits=14, decimal_places=2)
+    saldo_final = serializers.DecimalField(max_digits=14, decimal_places=2)
+    transacciones = ExtractoTransaccionSerializer(many=True)
+
+
+class CambiarEstadoCuentaSerializer(serializers.Serializer):
+    estado = serializers.ChoiceField(choices=CuentaBancaria.Estado.choices)
+
+
+class ProductoFinancieroSerializer(serializers.ModelSerializer):
+    tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
+    estado_display = serializers.CharField(source='get_estado_display', read_only=True)
+    cupo_disponible = serializers.SerializerMethodField()
+    cliente_nombre = serializers.CharField(source='cliente.nombre_completo', read_only=True)
+
+    class Meta:
+        model = ProductoFinanciero
+        fields = (
+            'id',
+            'cliente',
+            'cliente_nombre',
+            'tipo',
+            'tipo_display',
+            'nombre',
+            'cupo',
+            'saldo_utilizado',
+            'cupo_disponible',
+            'estado',
+            'estado_display',
+            'fecha_vencimiento',
+            'creado_en',
+            'actualizado_en',
+        )
+        read_only_fields = ('id', 'creado_en', 'actualizado_en')
+
+    def get_cupo_disponible(self, obj):
+        return obj.cupo_disponible
+
+    def validate(self, attrs):
+        cupo = attrs.get('cupo', getattr(self.instance, 'cupo', None))
+        saldo = attrs.get(
+            'saldo_utilizado',
+            getattr(self.instance, 'saldo_utilizado', 0),
+        )
+        if cupo is not None and saldo is not None and saldo > cupo:
+            raise serializers.ValidationError(
+                {'saldo_utilizado': 'No puede superar el cupo del producto.'}
+            )
+        return attrs

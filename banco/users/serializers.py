@@ -1,7 +1,22 @@
 from django.contrib.auth.models import Group, User
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from banking.models import Cliente
+
+
+class BancoTokenObtainPairSerializer(TokenObtainPairSerializer):
+    """Incluye rol en el JWT para que el frontend distinga admin vs cliente."""
+
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['username'] = user.username
+        token['is_staff'] = user.is_staff
+        token['is_superuser'] = user.is_superuser
+        return token
 
 
 class RolUsuario:
@@ -22,6 +37,13 @@ class RegistroClienteSerializer(serializers.Serializer):
     def validate_username(self, value):
         if User.objects.filter(username=value).exists():
             raise serializers.ValidationError('Este nombre de usuario ya está en uso.')
+        return value
+
+    def validate_password(self, value):
+        try:
+            validate_password(value)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError(list(exc.messages)) from exc
         return value
 
     def validate_numero_identificacion(self, value):

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiGet } from '../api/client';
 
@@ -94,6 +95,28 @@ export default function Dashboard() {
             <span className="stat-value">{transferencias.length}</span>
             <span className="stat-label">Transferencias</span>
           </div>
+        </div>
+      </div>
+
+      <div className="card quick-actions">
+        <div className="card-header"><h2>Acciones rápidas</h2></div>
+        <div className="card-body quick-actions-grid">
+          {isAdmin ? (
+            <>
+              <Link to="/admin/clientes" className="btn btn-primary">Gestionar clientes</Link>
+              <Link to="/admin/cuentas" className="btn btn-primary">Gestionar cuentas</Link>
+              <Link to="/admin/productos" className="btn btn-ghost">Productos financieros</Link>
+              <Link to="/cuentas" className="btn btn-ghost">Ver todas las cuentas</Link>
+            </>
+          ) : (
+            <>
+              <Link to="/cuentas" className="btn btn-ghost">Consultar cuentas</Link>
+              <Link to="/depositos" className="btn btn-ghost">Realizar operación</Link>
+              <Link to="/transferencias" className="btn btn-ghost">Transferir</Link>
+              <Link to="/extracto" className="btn btn-primary">Ver extracto</Link>
+              <Link to="/productos" className="btn btn-ghost">Mis productos</Link>
+            </>
+          )}
         </div>
       </div>
 
