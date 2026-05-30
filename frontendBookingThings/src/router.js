@@ -4,11 +4,13 @@ import { createRouter, createWebHistory} from "vue-router"
 import Index from "./pages/Index.vue";
 import SignUp from "./pages/SignUp.vue";
 import SignIn from "./pages/SignIn.vue";
+import Resource from "./pages/Resource.vue";
 
 const routes = [
     {path:'/', component:Index},
     {path:'/signup', component:SignUp},
     {path:'/signin', component:SignIn},
+    {path:'/resources', component:Resource},
 ]
 
 

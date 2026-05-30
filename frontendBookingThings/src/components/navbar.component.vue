@@ -10,7 +10,7 @@
                     </svg>
                 </div>
             </div>
-            <a class="btn btn-ghost text-xl">BookingThings</a>
+            <router-link to="/" class="btn btn-ghost text-xl">BookingThings</router-link>
         </div>
         <div class="navbar-end gap-3">
             <p v-if="sessionInfo != null" class="font-bold">¡Hola {{ sessionInfo.userName }}!</p>
@@ -19,8 +19,8 @@
                     <details>
                         <summary>Opciones</summary>
                         <ul class="bg-base-100 rounded-t-none p-2">
-                            <li><a>Recursos</a></li>
-                            <li><a>Reservas</a></li>
+                            <li><router-link to="/resources">Recursos</router-link></li>
+                            <li><router-link to="/bookings">Reservas</router-link></li>
                         </ul>
                     </details>
                 </li>
@@ -55,7 +55,6 @@ export default {
         logOut() {
             localStorage.removeItem("accessToken")
             localStorage.removeItem("sessionInfo")
-
             this.$router.push("/signin")
         }
     },
