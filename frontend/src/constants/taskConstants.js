@@ -1,8 +1,9 @@
 export const STATUS_COLS = [
-  { value: "pending",     label: "Pendiente",  color: "#f59e0b" },
-  { value: "in_progress", label: "En Progreso", color: "#3b82f6" },
-  { value: "in_review",   label: "En Revisión", color: "#a855f7" },
-  { value: "completed",   label: "Completada",  color: "#22c55e" },
+  { value: "pending",     label: "Pendiente",   color: "#f59e0b" },
+  { value: "in_progress", label: "En Progreso",  color: "#3b82f6" },
+  { value: "in_review",   label: "En Revisión",  color: "#a855f7" },
+  { value: "completed",   label: "Completada",   color: "#22c55e" },
+  { value: "cancelled",   label: "Cancelada",    color: "#6b7280" },
 ];
 
 export const PRIORITY_MAP = {

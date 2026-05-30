@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "functions": {
+    "backend/backend/wsgi.py": {
+      "runtime": "vercel-python@4.3.0",
+      "maxDuration": 30
+    }
+  },
+  "buildCommand": "python manage.py migrate --run-syncdb",
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "backend/backend/wsgi.py"
+    }
+  ]
+}
